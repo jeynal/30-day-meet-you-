@@ -11,13 +11,12 @@ let isWaitingForPlayer = false;
 let waitingForTap = false;
 let speedMode = 1; // 0=Slow, 1=Normal, 2=Fast, 3=Tap
 const delays = [2200, 1200, 500, 0];
-let currentLang = 'en';
 
 let chatOrderCounter = 100;
 
-// ตัวแปรเก็บคะแนนหัวใจสะสมลับ (Hidden Hearts)
+// Hidden Affinity Points System
 let characterHearts = {
-  chenxu: 0,
+  chenxu: 1, // Chen Xu likes the player from the start
   xiyao: 0,
   wenjun: 0,
   guyan: 0,
@@ -31,24 +30,57 @@ let playerProfile = {
   avatarDataUrl: '',
   age: 23,
   occupation: 'Automation Engineer',
-  interests: 'Reading, writing, music, watching',
-  idealType: 'Good guy, taller than me, mature',
-  datingStyle: 'Slow burn, fall slow but fall harder',
-  bestQuality: 'Honestly, friendly'
+  interests: 'Reading, writing, music',
+  idealType: 'Good guy, mature',
+  datingStyle: 'Slow burn',
+  bestQuality: 'Friendly'
 };
 
 let endingBookRecords = [];
 
 const contactsData = {
-  chenxu: { codeName: 'Mr. Horizon', realName: 'Chen Xu (เฉินซวี่)', age: 29, occupation: 'Lead Architect', avatarUrl: 'images/chenxu.jpg', bgTone: 'bg-purple-200 text-purple-800' },
-  xiyao: { codeName: 'Golden Puppy', realName: 'Xia Xiyao (เซี่ยซีเหยา)', age: 22, occupation: 'Idol Vocalist & Dancer', avatarUrl: 'images/xiyao.jpg', bgTone: 'bg-sky-200 text-sky-800' },
-  wenjun: { codeName: 'Velvet Noir', realName: 'Wen Jun (เวินจวิ้น)', age: 28, occupation: 'Art Gallery Owner', avatarUrl: 'images/wenjun.jpg', bgTone: 'bg-indigo-950 text-purple-200' },
-  guyan: { codeName: 'Black Cat', realName: 'Gu Yan (กู้เยี่ยน)', age: 24, occupation: 'Indie Game Developer', avatarUrl: 'images/guyan.jpg', bgTone: 'bg-slate-700 text-slate-200' },
-  yingyin: { codeName: 'Scarlet', realName: 'Song Yingyin (ซ่งอิงอิน)', age: 26, occupation: 'Fashion Editor', avatarUrl: 'images/yingyin.jpg', bgTone: 'bg-pink-200 text-pink-800' },
-  jiangyue: { codeName: 'Luna', realName: 'Jiang Yue (เจียงเยว่)', age: 25, occupation: 'Classical Pianist', avatarUrl: 'images/jiangyue.jpg', bgTone: 'bg-fuchsia-200 text-fuchsia-800' },
-  tangmei: { codeName: 'Mochi (Foco)', realName: 'Tang Mei (ถังเม่ย)', age: 23, occupation: 'Food Vlogger', avatarUrl: 'images/tangmei.jpg', bgTone: 'bg-purple-200 text-purple-800' },
+  chenxu: { codeName: 'Mr. Horizon', realName: 'Chen Xu', age: 29, occupation: 'Lead Architect', avatarUrl: 'images/chenxu.jpg', bgTone: 'bg-purple-200 text-purple-800' },
+  xiyao: { codeName: 'Golden Puppy', realName: 'Xia Xiyao', age: 22, occupation: 'Idol Vocalist & Dancer', avatarUrl: 'images/xiyao.jpg', bgTone: 'bg-sky-200 text-sky-800' },
+  wenjun: { codeName: 'Velvet Noir', realName: 'Wen Jun', age: 28, occupation: 'Art Gallery Owner', avatarUrl: 'images/wenjun.jpg', bgTone: 'bg-indigo-950 text-purple-200' },
+  guyan: { codeName: 'Black Cat', realName: 'Gu Yan', age: 24, occupation: 'Indie Game Developer', avatarUrl: 'images/guyan.jpg', bgTone: 'bg-slate-700 text-slate-200' },
+  yingyin: { codeName: 'Scarlet', realName: 'Song Yingyin', age: 26, occupation: 'Fashion Editor', avatarUrl: 'images/yingyin.jpg', bgTone: 'bg-pink-200 text-pink-800' },
+  jiangyue: { codeName: 'Luna', realName: 'Jiang Yue', age: 25, occupation: 'Classical Pianist', avatarUrl: 'images/jiangyue.jpg', bgTone: 'bg-fuchsia-200 text-fuchsia-800' },
+  tangmei: { codeName: 'Mochi (Foco)', realName: 'Tang Mei', age: 23, occupation: 'Food Vlogger', avatarUrl: 'images/tangmei.jpg', bgTone: 'bg-purple-200 text-purple-800' },
   master: { codeName: 'Producer', realName: 'Plan Master', occupation: 'Executive Director of LUMEN', avatarUrl: '', bgTone: 'bg-pink-100 text-fuchsia-700', isSpecial: true },
-  bot: { codeName: 'LUMEN Counselor', realName: 'LUMEN Counselor', occupation: 'Insight Advisor Bot', avatarUrl: '', bgTone: 'bg-emerald-100 text-emerald-800', isSpecial: true }
+  bot: { codeName: 'Love Counselor', realName: 'Love Counselor', occupation: 'LUMEN Counselor', avatarUrl: '', bgTone: 'bg-emerald-100 text-emerald-800', isSpecial: true },
+  heartAdmin: { codeName: 'Midnight Heart', realName: 'Midnight Heart', occupation: 'Heart Signal Manager', avatarUrl: '', bgTone: 'bg-pink-100 text-fuchsia-800', isSpecial: true }
+};
+
+// Repository of anonymous secret messages for each guy
+const guySecretMessages = {
+  chenxu: {
+    day1: "Thanks for the kind write-up",
+    day7: "I hope you are adjusting well to Shanghai's rhythm.",
+    day14: "I kept the small coffee mug you mentioned.",
+    day21: "Looking forward to walking along the Bund with you again.",
+    day28: "My choice has always been you from Day 1."
+  },
+  xiyao: {
+    day1: "Glad to meet you! Hope we can talk more ✨",
+    day7: "Your smile in group chat brightened my whole day!",
+    day14: "Let's go eat sweet milk tea together sometime!",
+    day21: "I felt really happy every time you responded to me.",
+    day28: "You are the sweetest part of my 30 days."
+  },
+  wenjun: {
+    day1: "A gentle night in Shanghai. Glad you joined us.",
+    day7: "Your taste in conversation is intriguing, little one.",
+    day14: "I played a jazz vinyl tonight and thought of your words.",
+    day21: "The gallery feels warm whenever you visit.",
+    day28: "Thank you for making this season unforgettable."
+  },
+  guyan: {
+    day1: "...Thanks for not ignoring my quiet hello.",
+    day7: "I don't usually text much, but I read all your lines.",
+    day14: "Finished my game level. Thought I'd send you a heart.",
+    day21: "My black cat seems to like your picture too.",
+    day28: "You are the only exception to my code."
+  }
 };
 
 // 1. SYSTEM INITIALIZATION & LOGIN
@@ -110,23 +142,31 @@ function updateUIFromState() {
   }
 }
 
-// 2. CHECK BOT TRIGGER EVERY 7 DAYS (DAY 7, 14, 21, 28)
+// 2. CHECK BOT TRIGGER (Every 7 Days: Day 7, 14, 21, 28)
 function checkWeeklyBotTrigger() {
-  if (currentDay % 7 === 0 || currentDay === 1) { 
-    document.getElementById('channel-bot').classList.remove('hidden');
+  const botChannel = document.getElementById('channel-bot');
+  if (!botChannel) return;
+
+  if (currentDay > 1 && currentDay % 7 === 0) {
+    botChannel.classList.remove('hidden');
     moveChannelToTop('bot');
-    triggerInAppNotification('LUMEN Counselor 🤖', `Day ${currentDay} Insight: คุณรู้ไหมว่าใครกำลังแอบชอบคุณอยู่?`, '🤖', 'bot');
+    triggerInAppNotification('Love Counselor 💬', `Hello ${playerProfile.name}! It's been 7 days, checking in on you...`, '💬', 'bot');
+  } else {
+    botChannel.classList.add('hidden');
   }
 }
 
-// 3. IN-APP POPUP NOTIFICATION & DYNAMIC REORDERING
+// 3. IN-APP POPUP NOTIFICATION
 function triggerInAppNotification(title, msg, avatarText = 'M', targetRoom = 'master', avatarImgUrl = '') {
   moveChannelToTop(targetRoom);
 
   if (targetRoom === 'master') document.getElementById('master-last-msg').textContent = msg;
   if (targetRoom === 'group') document.getElementById('group-last-msg').textContent = msg;
   if (targetRoom === 'heart') document.getElementById('heart-last-msg').textContent = msg;
-  if (targetRoom === 'bot') document.getElementById('bot-last-msg').textContent = msg;
+  if (targetRoom === 'bot') {
+    const el = document.getElementById('bot-last-msg');
+    if (el) el.textContent = msg;
+  }
 
   if (activeRoomId === targetRoom) return;
 
@@ -401,7 +441,7 @@ function renderPlayerChoices(choiceItem) {
   const container = document.getElementById('choices-container');
   const promptText = document.getElementById('choices-prompt-text');
 
-  promptText.textContent = choiceItem.prompt || 'เลือกคำตอบของคุณ:';
+  promptText.textContent = choiceItem.prompt || 'Select your response:';
   container.innerHTML = '';
 
   choiceItem.options.forEach((opt) => {
@@ -418,10 +458,8 @@ function renderPlayerChoices(choiceItem) {
 function selectChoiceOption(optionObj) {
   document.getElementById('group-choices-panel').classList.add('hidden');
 
-  // 1. แสดงข้อความตัวเลือกของผู้เล่นลงแชต
   addUserBubble(document.getElementById('group-stream'), optionObj.text);
 
-  // 2. คำนวณและเก็บคะแนนหัวใจไว้ซ่อนหลังบ้าน (ไม่มีการแจ้งเตือนขึ้นหน้าจอ)
   if (optionObj.hearts) {
     Object.entries(optionObj.hearts).forEach(([charKey, amount]) => {
       if (characterHearts[charKey] !== undefined) {
@@ -431,7 +469,6 @@ function selectChoiceOption(optionObj) {
     saveUserData();
   }
 
-  // 3. แสดงข้อความตอบกลับของตัวละคร (ถ้ามี)
   if (optionObj.replySender && optionObj.replyText) {
     showTypingIndicator(optionObj.replySender, () => {
       const guyKey = Object.keys(contactsData).find(k => contactsData[k].codeName === optionObj.replySender || contactsData[k].realName === optionObj.replySender);
@@ -447,63 +484,248 @@ function selectChoiceOption(optionObj) {
   }
 }
 
-// 7. CONSULTANT BOT CHAT (สุ่มเปิดดูคะแนนหัวใจลับทุก 7 วัน)
+// 7. CONSULTANT BOT CHATROOM
 function openConsultantBotChat() {
   activeRoomId = 'bot';
   document.getElementById('main-header').classList.add('hidden');
   document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
   document.getElementById('chat-inside-header').classList.remove('hidden');
-  document.getElementById('active-chat-title').textContent = 'LUMEN Counselor 🤖';
-  document.getElementById('room-bot').classList.remove('hidden');
-  document.getElementById('bot-unread-dot').classList.add('hidden');
+  document.getElementById('active-chat-title').textContent = 'Love Counselor 💬';
+  
+  const botRoom = document.getElementById('room-bot');
+  if (botRoom) botRoom.classList.remove('hidden');
 
-  document.getElementById('bot-day-num').textContent = currentDay;
-  document.getElementById('bot-insight-result').classList.add('hidden');
-  document.getElementById('bot-guy-select-panel').classList.remove('hidden');
+  const unreadDot = document.getElementById('bot-unread-dot');
+  if (unreadDot) unreadDot.classList.add('hidden');
 
-  const container = document.getElementById('bot-guy-buttons');
+  const stream = document.getElementById('bot-stream');
+  if (stream && stream.children.length === 0) {
+    addBotBubble(`Hello ${playerProfile.name} 😊 Day ${currentDay} has passed! How are you feeling so far?`);
+    setTimeout(() => {
+      addBotBubble(`Would you like to know who in the group is secretly impressioned by you? Whose affinity shall I secretly check for you?`);
+      showBotGuyChoices();
+    }, 1000);
+  }
+}
+
+function addBotBubble(txt) {
+  const stream = document.getElementById('bot-stream');
+  const b = document.createElement('div');
+  b.className = "chat-bubble flex items-start space-x-2.5 my-2";
+  b.innerHTML = `
+    <div class="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-xs text-white shrink-0 mt-0.5 border border-emerald-100 shadow-sm">💬</div>
+    <div class="space-y-0.5 max-w-[80%]">
+      <span class="text-[11px] font-semibold text-emerald-600 ml-1">Love Counselor</span>
+      <div class="bg-white border border-emerald-100 text-purple-950 px-3.5 py-2 rounded-2xl rounded-tl-none text-xs leading-relaxed shadow-sm">${txt}</div>
+    </div>
+  `;
+  stream.appendChild(b);
+  stream.scrollTop = stream.scrollHeight;
+  
+  const lastMsgEl = document.getElementById('bot-last-msg');
+  if (lastMsgEl) lastMsgEl.textContent = `Love Counselor: ${txt}`;
+}
+
+function showBotGuyChoices() {
+  const panel = document.getElementById('bot-choices-panel');
+  const container = document.getElementById('bot-choices-container');
+  if (!panel || !container) return;
+
   container.innerHTML = '';
-
   const guysList = [
-    { key: 'chenxu', name: 'Chen Xu (เฉินซวี่)' },
-    { key: 'xiyao', name: 'Xia Xiyao (เซี่ยซีเหยา)' },
-    { key: 'wenjun', name: 'Wen Jun (เวินจวิ้น)' },
-    { key: 'guyan', name: 'Gu Yan (กู้เยี่ยน)' }
+    { key: 'chenxu', name: '1. Chen Xu (Mr. Horizon)' },
+    { key: 'xiyao', name: '2. Xia Xiyao (Golden Puppy)' },
+    { key: 'wenjun', name: '3. Wen Jun (Velvet Noir)' },
+    { key: 'guyan', name: '4. Gu Yan (Black Cat)' }
   ];
 
   guysList.forEach(guy => {
     const btn = document.createElement('button');
-    btn.className = "w-full bg-white hover:bg-emerald-50 border border-emerald-200 text-purple-950 p-3 rounded-xl text-xs font-bold transition flex items-center justify-between shadow-xs";
-    btn.innerHTML = `<span>🔍 สุ่มตรวจความชอบของ: ${guy.name}</span><span class="text-emerald-600">Select →</span>`;
-    btn.onclick = () => revealGuyHeartInsight(guy.key);
+    btn.className = "w-full text-left p-2.5 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 rounded-xl text-xs text-emerald-950 transition active:scale-[0.99] font-medium shadow-xs";
+    btn.textContent = `I want to check on ${guy.name}`;
+    btn.onclick = () => selectBotGuyChoice(guy.key, guy.name);
     container.appendChild(btn);
   });
+
+  panel.classList.remove('hidden');
 }
 
-function revealGuyHeartInsight(guyKey) {
+function selectBotGuyChoice(guyKey, guyName) {
+  document.getElementById('bot-choices-panel').classList.add('hidden');
+  addUserBubble(document.getElementById('bot-stream'), `I want to check on ${guyName}`);
+
   const score = characterHearts[guyKey] || 0;
   const person = contactsData[guyKey];
 
   const analysisTexts = {
-    chenxu: score >= 4 
-      ? `"เฉินซวี่ประทับใจความสงบและความเข้าอกเข้าใจของคุณมากๆ เขามองคุณเป็นคนที่คุยด้วยแล้วสบายใจที่สุดในกลุ่ม"` 
-      : `"เฉินซวี่มองคุณเป็นเพื่อนร่วมรายการที่มีมารยาทดี แต่เขายังเปิดใจให้คุณไม่เต็มที่ ลองหาจังหวะคุยเรื่องลึกซึ้งกว่านี้ดูนะ"`,
-    xiyao: score >= 4 
-      ? `"เซี่ยซีเหยาชอบพลังงานบวกของคุณมาก! ทุกครั้งที่คุณตอบ เขาจะยิ้มออกมาโดยไม่รู้ตัวเลยล่ะ"` 
-      : `"เซี่ยซีเหยาคิดว่าคุณเป็นพี่สาว/เพื่อนที่น่ารัก แต่เขายังไม่แน่ใจว่าคุณสนใจเขาจริงๆ หรือเปล่า"`,
-    wenjun: score >= 4 
-      ? `"เวินจวิ้นรู้สึกถึงเคมีบางอย่างที่ดึงดูดระหว่างคุณกับเขา เขามักจะแอบมองคำตอบของคุณก่อนใครเสมอ"` 
-      : `"เวินจวิ้นมองคุณด้วยสายตาสังเกตการณ์อย่างสุภาพ เขากำลังรอรสนิยมและความคิดที่แท้จริงของคุณอยู่"`,
-    guyan: score >= 4 
-      ? `"กู้เยี่ยนที่ปกติไม่สนใจใคร ถึงกับแอบบันทึกคำพูดของคุณไว้ในใจ! เขารู้สึกว่าคุณเข้าใจโลกของเขา"` 
-      : `"กู้เยี่ยนยังคงทำตัวเย็นชาและเก็บตัว แต่เขาก็ไม่ได้ปฏิเสธข้อความของคุณนะ แค่ต้องใช้เวลาเพิ่มอีกนิด"`
+    chenxu: score >= 1 
+      ? `"Chen Xu is deeply impressed by your calm and understanding nature. He feels most comfortable talking to you in the group ✨"` 
+      : `"Chen Xu views you as a polite participant, but hasn't fully opened up yet. Try finding moments for deeper conversations."`,
+    xiyao: score >= 2 
+      ? `"Xiyao loves your bright energy! Every time you respond in group chat, he smiles without realizing it 😊"` 
+      : `"Xiyao thinks you're a sweet sister/friend, but isn't sure if you're truly interested in him yet."`,
+    wenjun: score >= 2 
+      ? `"Wen Jun senses a subtle magnetic chemistry between you two. He secretly looks out for your replies first 😉"` 
+      : `"Wen Jun observes you with polite curiosity. He's waiting to discover more of your authentic thoughts."`,
+    guyan: score >= 2 
+      ? `"Gu Yan, who usually ignores everyone, actually saved your words to memory! He feels you truly understand his world."` 
+      : `"Gu Yan is still keeping his tsundere defense up. He hasn't rejected your messages, just needs a little more time."`
   };
 
-  document.getElementById('bot-guy-select-panel').classList.add('hidden');
-  document.getElementById('bot-result-name').textContent = person.realName;
-  document.getElementById('bot-result-score').textContent = `❤️ ${score} Points`;
-  document.getElementById('bot-result-desc').textContent = analysisTexts[guyKey] || `"เขากำลังจับตาดูคุณอยู่อย่างเงียบๆ..."`;
-  document.getElementById('bot-insight-result').classList.remove('hidden');
+  setTimeout(() => {
+    addBotBubble(`From my subtle observations... [Affinity Level for ${person.realName}: ❤️ ${score} Points]`);
+    setTimeout(() => {
+      addBotBubble(analysisTexts[guyKey]);
+    }, 1200);
+  }, 800);
+}
+
+// 8. HEART SENDING ENGINE
+let selectedHeartTargetKey = null;
+
+function openHeartSendingRoom() {
+  activeRoomId = 'heart';
+  document.getElementById('main-header').classList.add('hidden');
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
+  document.getElementById('chat-inside-header').classList.remove('hidden');
+  document.getElementById('active-chat-title').textContent = '<Heart Sending>';
+  document.getElementById('room-heart').classList.remove('hidden');
+
+  const stream = document.getElementById('heart-stream');
+  if (stream && stream.children.length === 0) {
+    addHeartAdminMsg(`🌙 Welcome to Midnight Heart Signal, ${playerProfile.name}.`);
+    setTimeout(() => {
+      addHeartAdminMsg(`Another day has passed... Have you grown closer to anyone? Did anyone make you smile today?`);
+      setTimeout(() => {
+        addHeartAdminMsg(`It's time to send your heart signal tonight. Who would you like to send your heart to?`);
+        showHeartGuyChoices();
+      }, 1000);
+    }, 1000);
+  }
+}
+
+function addHeartAdminMsg(txt) {
+  const stream = document.getElementById('heart-stream');
+  const b = document.createElement('div');
+  b.className = "chat-bubble flex items-start space-x-2.5 my-2";
+  b.innerHTML = `
+    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-300 to-pink-300 flex items-center justify-center font-bold text-xs text-white shrink-0 mt-0.5 border border-pink-100 shadow-sm">💌</div>
+    <div class="space-y-0.5 max-w-[80%]">
+      <span class="text-[11px] font-semibold text-pink-500 ml-1">Heart Manager</span>
+      <div class="bg-white border border-pink-100 text-purple-950 px-3.5 py-2 rounded-2xl rounded-tl-none text-xs leading-relaxed shadow-sm">${txt}</div>
+    </div>
+  `;
+  stream.appendChild(b);
+  stream.scrollTop = stream.scrollHeight;
+  document.getElementById('heart-last-msg').textContent = `Heart Manager: ${txt}`;
+}
+
+function showHeartGuyChoices() {
+  const panel = document.getElementById('heart-choices-panel');
+  const container = document.getElementById('heart-choices-container');
+  if (!panel || !container) return;
+
+  container.innerHTML = '';
+  const guysList = [
+    { key: 'chenxu', name: '1. Chen Xu (Mr. Horizon)' },
+    { key: 'xiyao', name: '2. Xia Xiyao (Golden Puppy)' },
+    { key: 'wenjun', name: '3. Wen Jun (Velvet Noir)' },
+    { key: 'guyan', name: '4. Gu Yan (Black Cat)' }
+  ];
+
+  guysList.forEach(guy => {
+    const btn = document.createElement('button');
+    btn.className = "w-full text-left p-2.5 bg-pink-50 hover:bg-pink-100/80 border border-pink-200/80 rounded-xl text-xs text-pink-950 transition active:scale-[0.99] font-medium shadow-xs";
+    btn.textContent = `Send heart to ${guy.name}`;
+    btn.onclick = () => selectHeartGuyTarget(guy.key, guy.name);
+    container.appendChild(btn);
+  });
+
+  panel.classList.remove('hidden');
+}
+
+function selectHeartGuyTarget(guyKey, guyName) {
+  selectedHeartTargetKey = guyKey;
+  document.getElementById('heart-choices-panel').classList.add('hidden');
+  addUserBubble(document.getElementById('heart-stream'), `Sending my heart to ${guyName}`);
+
+  setTimeout(() => {
+    addHeartAdminMsg(`You can leave a short secret message along with your heart... What would you like to say to him?`);
+    document.getElementById('heart-input-panel').classList.remove('hidden');
+  }, 800);
+}
+
+function submitHeartMessageFlow() {
+  const inputEl = document.getElementById('heart-text-input');
+  const msgText = inputEl.value.trim();
+  if (!msgText) return;
+
+  document.getElementById('heart-input-panel').classList.add('hidden');
+  addUserBubble(document.getElementById('heart-stream'), `"${msgText}"`);
+
+  // Show Sweet Popup Notification
+  const popup = document.getElementById('sweet-popup');
+  document.getElementById('sweet-popup-title').textContent = 'Delivering your feelings...';
+  document.getElementById('sweet-popup-sub').textContent = 'Heart Signal delivered successfully ❤️';
+  popup.classList.remove('hidden');
+
+  setTimeout(() => {
+    popup.classList.add('hidden');
+
+    addHeartAdminMsg(`Your heart and secret note have been delivered ✨`);
+    
+    setTimeout(() => {
+      addHeartAdminMsg(`The system has gathered anonymous heart messages from the guys... Let's see who sent you a heart tonight!`);
+      
+      setTimeout(() => {
+        renderReceivedHeartCards();
+      }, 1500);
+    }, 1200);
+
+  }, 1800);
+}
+
+// Render Heart Message Ticket Cards
+function renderReceivedHeartCards() {
+  const stream = document.getElementById('heart-stream');
+  
+  let qualifiedGuys = ['chenxu']; // Chen Xu always sends a heart
+
+  if (characterHearts.xiyao >= 2) qualifiedGuys.push('xiyao');
+  if (characterHearts.wenjun >= 2) qualifiedGuys.push('wenjun');
+  if (characterHearts.guyan >= 2) qualifiedGuys.push('guyan');
+
+  const dayKey = `day${currentDay}` in guySecretMessages.chenxu ? `day${currentDay}` : 'day1';
+
+  qualifiedGuys.forEach((guyKey) => {
+    const cardText = guySecretMessages[guyKey][dayKey] || "Thanks for the kind write-up";
+
+    const cardBubble = document.createElement('div');
+    cardBubble.className = "chat-bubble my-3 flex justify-center";
+    cardBubble.innerHTML = `
+      <div class="heart-card-bg text-red-900 rounded-2xl p-4 shadow-lg border border-pink-200/80 w-full max-w-xs font-typewriter relative overflow-hidden">
+        <div class="text-[9px] text-red-800/80 font-sans tracking-widest font-bold flex justify-between border-b border-red-900/10 pb-1 mb-2 uppercase">
+          <span>30 DAYS TO LOVE</span>
+          <span>THE AFTERIMAGE PARADOX</span>
+        </div>
+        <div class="flex items-center space-x-1.5 text-red-900 font-bold text-sm mb-2">
+          <span>❤️</span>
+          <span class="tracking-wide">Heart Message</span>
+        </div>
+        <div class="bg-white/90 backdrop-blur-xs p-4 rounded-xl border border-white/60 shadow-inner text-center my-2">
+          <p class="text-xs font-semibold text-slate-800 leading-relaxed font-sans">"${cardText}"</p>
+        </div>
+        <div class="flex justify-between items-end mt-3 pt-1 border-t border-red-900/10">
+          <div class="text-[10px] tracking-tighter opacity-70">||||||||||||||||||||</div>
+          <span class="font-serif italic font-bold text-xs opacity-80">TDL</span>
+        </div>
+      </div>
+    `;
+    stream.appendChild(cardBubble);
+  });
+
+  stream.scrollTop = stream.scrollHeight;
+  saveUserData();
 }
 
 function scheduleGroupNext() {
@@ -590,7 +812,7 @@ function addUserBubble(container, txt) {
   container.scrollTop = container.scrollHeight;
 }
 
-// 8. OTHER TABS & UTILS
+// 9. OTHER TABS & UTILS
 function switchTab(tabKey) {
   exitActiveChat();
   document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
@@ -619,7 +841,10 @@ function exitActiveChat() {
   document.getElementById('room-master').classList.add('hidden');
   document.getElementById('room-group').classList.add('hidden');
   document.getElementById('room-heart').classList.add('hidden');
-  document.getElementById('room-bot').classList.add('hidden');
+  
+  const botRoom = document.getElementById('room-bot');
+  if (botRoom) botRoom.classList.add('hidden');
+
   document.getElementById('main-header').classList.remove('hidden');
   document.getElementById('tab-chats').classList.remove('hidden');
 }
@@ -684,7 +909,7 @@ function renderEndingBookTab() {
 function saveCurrentEndingRecord() {
   const newRecord = {
     title: `Season Loop #${endingBookRecords.length + 1} Ending`,
-    partner: 'Chen Xu (เฉินซวี่)',
+    partner: 'Chen Xu',
     date: new Date().toLocaleDateString(),
     storySummary: 'After 30 days in Shanghai, you walked along the Bund with Chen Xu under the quiet night stars.'
   };
@@ -710,7 +935,6 @@ function restartGameNewLoop() {
   }
 }
 
-// แสดงรายการผู้ติดต่อ (ซ่อนแต้มหัวใจไว้อย่างสมบูรณ์)
 function renderPeopleTab() {
   const list = document.getElementById('people-friends-list');
   list.innerHTML = '';
@@ -827,52 +1051,4 @@ function applyChatTheme(theme) {
 function openSwitchAccountModal() {
   document.getElementById('login-email-input').value = '';
   document.getElementById('modal-email-login').classList.remove('hidden');
-}
-
-function openHeartSendingRoom() {
-  activeRoomId = 'heart';
-  document.getElementById('main-header').classList.add('hidden');
-  document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
-  document.getElementById('chat-inside-header').classList.remove('hidden');
-  document.getElementById('active-chat-title').textContent = '<Heart Sending>';
-  document.getElementById('room-heart').classList.remove('hidden');
-
-  const targetList = document.getElementById('heart-target-list');
-  targetList.innerHTML = '';
-  ['chenxu', 'xiyao', 'wenjun', 'guyan'].forEach(k => {
-    const guy = contactsData[k];
-    const item = document.createElement('div');
-    item.className = "p-3 rounded-2xl bg-white border border-purple-100 flex items-center justify-between cursor-pointer transition shadow-sm";
-    item.onclick = () => selectHeartTarget(k, item);
-    item.innerHTML = `<div class="flex items-center space-x-3"><div class="w-10 h-10 rounded-full ${guy.bgTone} flex items-center justify-center font-bold text-xs">${guy.realName[0]}</div><div><span class="text-xs font-bold text-purple-950">${guy.realName}</span><p class="text-[10px] text-purple-400">${guy.occupation}</p></div></div><span class="text-xs text-fuchsia-500 font-bold">Select ❤️</span>`;
-    targetList.appendChild(item);
-  });
-}
-
-let targetGuyKey = null;
-function selectHeartTarget(key, el) {
-  targetGuyKey = key;
-  document.querySelectorAll('#heart-target-list > div').forEach(d => d.classList.remove('border-fuchsia-400', 'bg-pink-50/50'));
-  el.classList.add('border-fuchsia-400', 'bg-pink-50/50');
-  document.getElementById('heart-msg-box').classList.remove('hidden');
-}
-
-function submitMidnightHeart() {
-  const msg = document.getElementById('heart-input-text').value.trim();
-  if (!msg) return;
-
-  document.getElementById('heart-msg-box').classList.add('hidden');
-  document.getElementById('heart-target-list').classList.add('hidden');
-
-  const guy = contactsData[targetGuyKey];
-  const reactions = {
-    chenxu: `Chen Xu (เฉินซวี่): "Mmh, I received your secret note. Get some rest, let's talk tomorrow."`,
-    xiyao: `Xia Xiyao (เซี่ยซีเหยา): "Did jiejie really pick me!? I'm smiling so hard right now!"`,
-    wenjun: `Wen Jun (เวินจวิ้น): "Mmh... sending this kind of message, little one? Sleep well tonight."`,
-    guyan: `Gu Yan (กู้เยี่ยน): "...Who said I was waiting for your note? Good night."`
-  };
-
-  document.getElementById('heart-result-box').classList.remove('hidden');
-  document.getElementById('heart-reply-view').innerHTML = `<span class="text-[10px] text-purple-400 block mb-1">Delivered to ${guy.realName}:</span>"${msg}"<div class="mt-2 pt-2 border-t border-purple-100 text-fuchsia-600 font-semibold">${reactions[targetGuyKey]}</div>`;
-  saveUserData();
 }
