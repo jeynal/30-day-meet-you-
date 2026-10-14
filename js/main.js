@@ -1,12 +1,10 @@
 // Global State & Save System
 let userEmail = '';
-let geminiApiKey = '';
-
 let currentDay = 1;
 let maxUnlockedDay = 1;
 let dialogueQueue = [];
 let masterQueue = [];
-let activeRoomId = null; // 'master', 'group', 'heart'
+let activeRoomId = null;
 let currentNotificationRoomTarget = null;
 
 let isWaitingForPlayer = false;
@@ -15,8 +13,18 @@ let speedMode = 1; // 0=Slow, 1=Normal, 2=Fast, 3=Tap
 const delays = [2200, 1200, 500, 0];
 let currentLang = 'en';
 
-// ลำดับของ Order สำหรับสลับแชตล่าสุดขึ้นบนสุด
 let chatOrderCounter = 100;
+
+// ตัวแปรเก็บคะแนนหัวใจสะสมลับ (Hidden Hearts)
+let characterHearts = {
+  chenxu: 0,
+  xiyao: 0,
+  wenjun: 0,
+  guyan: 0,
+  yingyin: 0,
+  jiangyue: 0,
+  tangmei: 0
+};
 
 let playerProfile = {
   name: 'Lin XinYue',
@@ -32,18 +40,18 @@ let playerProfile = {
 let endingBookRecords = [];
 
 const contactsData = {
-  chenxu: { codeName: 'Mr. Horizon', realName: 'Chen Xu (เฉินซวี่)', age: 29, occupation: 'Lead Architect', interests: 'Structure sketches, Coffee', idealType: 'Peace without words', datingStyle: 'More action than words', bestQuality: 'Responsibility', avatarUrl: 'images/chenxu.jpg', bgTone: 'bg-purple-200 text-purple-800' },
-  xiyao: { codeName: 'Golden Puppy', realName: 'Xia Xiyao (เซี่ยซีเหยา)', age: 22, occupation: 'Idol Vocalist & Dancer', interests: 'Dance, Cheese milk tea', idealType: 'Sweet older sister', datingStyle: 'Clingy & affectionate 24/7', bestQuality: 'Bright Energy', avatarUrl: 'images/xiyao.jpg', bgTone: 'bg-sky-200 text-sky-800' },
-  wenjun: { codeName: 'Velvet Noir', realName: 'Wen Jun (เวินจวิ้น)', age: 28, occupation: 'Art Gallery Owner', interests: 'Vintage wine, Jazz vinyls', idealType: 'Lovely little one', datingStyle: 'Gentle and attentive', bestQuality: 'Deep Eyes', avatarUrl: 'images/wenjun.jpg', bgTone: 'bg-indigo-950 text-purple-200' },
-  guyan: { codeName: 'Black Cat', realName: 'Gu Yan (กู้เยี่ยน)', age: 24, occupation: 'Indie Game Developer', interests: 'Midnight coding, Black cats', idealType: 'Quiet person', datingStyle: 'Tsundere with words', bestQuality: 'Quiet Focus', avatarUrl: 'images/guyan.jpg', bgTone: 'bg-slate-700 text-slate-200' },
-  yingyin: { codeName: 'Scarlet', realName: 'Song Yingyin (ซ่งอิงอิน)', age: 26, occupation: 'Fashion Editor', interests: 'Haute couture, Espresso', idealType: 'Sophisticated gentleman', datingStyle: 'Elegant romance', avatarUrl: 'images/yingyin.jpg', bgTone: 'bg-pink-200 text-pink-800' },
-  jiangyue: { codeName: 'Luna', realName: 'Jiang Yue (เจียงเยว่)', age: 25, occupation: 'Classical Pianist', interests: 'Chopin, Afternoon tea', idealType: 'Romantic soul', datingStyle: 'Soft melodic love', avatarUrl: 'images/jiangyue.jpg', bgTone: 'bg-fuchsia-200 text-fuchsia-800' },
-  tangmei: { codeName: 'Mochi (Foco)', realName: 'Tang Mei (ถังเม่ย)', age: 23, occupation: 'Food Vlogger', interests: 'Street food, Baking', idealType: 'Someone who loves eating', datingStyle: 'Cute & energetic', avatarUrl: 'images/tangmei.jpg', bgTone: 'bg-purple-200 text-purple-800' },
+  chenxu: { codeName: 'Mr. Horizon', realName: 'Chen Xu (เฉินซวี่)', age: 29, occupation: 'Lead Architect', avatarUrl: 'images/chenxu.jpg', bgTone: 'bg-purple-200 text-purple-800' },
+  xiyao: { codeName: 'Golden Puppy', realName: 'Xia Xiyao (เซี่ยซีเหยา)', age: 22, occupation: 'Idol Vocalist & Dancer', avatarUrl: 'images/xiyao.jpg', bgTone: 'bg-sky-200 text-sky-800' },
+  wenjun: { codeName: 'Velvet Noir', realName: 'Wen Jun (เวินจวิ้น)', age: 28, occupation: 'Art Gallery Owner', avatarUrl: 'images/wenjun.jpg', bgTone: 'bg-indigo-950 text-purple-200' },
+  guyan: { codeName: 'Black Cat', realName: 'Gu Yan (กู้เยี่ยน)', age: 24, occupation: 'Indie Game Developer', avatarUrl: 'images/guyan.jpg', bgTone: 'bg-slate-700 text-slate-200' },
+  yingyin: { codeName: 'Scarlet', realName: 'Song Yingyin (ซ่งอิงอิน)', age: 26, occupation: 'Fashion Editor', avatarUrl: 'images/yingyin.jpg', bgTone: 'bg-pink-200 text-pink-800' },
+  jiangyue: { codeName: 'Luna', realName: 'Jiang Yue (เจียงเยว่)', age: 25, occupation: 'Classical Pianist', avatarUrl: 'images/jiangyue.jpg', bgTone: 'bg-fuchsia-200 text-fuchsia-800' },
+  tangmei: { codeName: 'Mochi (Foco)', realName: 'Tang Mei (ถังเม่ย)', age: 23, occupation: 'Food Vlogger', avatarUrl: 'images/tangmei.jpg', bgTone: 'bg-purple-200 text-purple-800' },
   master: { codeName: 'Producer', realName: 'Plan Master', occupation: 'Executive Director of LUMEN', avatarUrl: '', bgTone: 'bg-pink-100 text-fuchsia-700', isSpecial: true },
-  consultant: { codeName: 'LUMEN Bot', realName: 'LUMEN Counselor', occupation: 'Relationship Advisor Bot', avatarUrl: '', bgTone: 'bg-emerald-100 text-emerald-800', isSpecial: true }
+  bot: { codeName: 'LUMEN Counselor', realName: 'LUMEN Counselor', occupation: 'Insight Advisor Bot', avatarUrl: '', bgTone: 'bg-emerald-100 text-emerald-800', isSpecial: true }
 };
 
-// 1. SYSTEM INIT & LOGIN
+// 1. SYSTEM INITIALIZATION & LOGIN
 window.addEventListener('DOMContentLoaded', () => {
   const savedEmail = localStorage.getItem('lumen_user_email');
   if (savedEmail) {
@@ -67,7 +75,7 @@ function submitEmailLogin() {
 
 function saveUserData() {
   if (!userEmail) return;
-  const storeObj = { currentDay, maxUnlockedDay, playerProfile, endingBookRecords };
+  const storeObj = { currentDay, maxUnlockedDay, playerProfile, endingBookRecords, characterHearts };
   localStorage.setItem(`lumen_save_${userEmail}`, JSON.stringify(storeObj));
 }
 
@@ -79,9 +87,10 @@ function loadUserData() {
     maxUnlockedDay = data.maxUnlockedDay || 1;
     playerProfile = data.playerProfile || playerProfile;
     endingBookRecords = data.endingBookRecords || [];
+    characterHearts = data.characterHearts || characterHearts;
   }
   updateUIFromState();
-  loadApiKeyFromStorage();
+  checkWeeklyBotTrigger();
 }
 
 function updateUIFromState() {
@@ -101,17 +110,24 @@ function updateUIFromState() {
   }
 }
 
-// 2. IN-APP POPUP NOTIFICATION & DYNAMIC REORDERING SYSTEM
+// 2. CHECK BOT TRIGGER EVERY 7 DAYS (DAY 7, 14, 21, 28)
+function checkWeeklyBotTrigger() {
+  if (currentDay % 7 === 0 || currentDay === 1) { 
+    document.getElementById('channel-bot').classList.remove('hidden');
+    moveChannelToTop('bot');
+    triggerInAppNotification('LUMEN Counselor 🤖', `Day ${currentDay} Insight: คุณรู้ไหมว่าใครกำลังแอบชอบคุณอยู่?`, '🤖', 'bot');
+  }
+}
+
+// 3. IN-APP POPUP NOTIFICATION & DYNAMIC REORDERING
 function triggerInAppNotification(title, msg, avatarText = 'M', targetRoom = 'master', avatarImgUrl = '') {
-  // สลับลำดับให้รายการแชตนี้ขึ้นมาอยู่อันดับ 1 บนสุด
   moveChannelToTop(targetRoom);
 
-  // อัปเดตข้อความล่าสุดในรายการแชต
   if (targetRoom === 'master') document.getElementById('master-last-msg').textContent = msg;
   if (targetRoom === 'group') document.getElementById('group-last-msg').textContent = msg;
   if (targetRoom === 'heart') document.getElementById('heart-last-msg').textContent = msg;
+  if (targetRoom === 'bot') document.getElementById('bot-last-msg').textContent = msg;
 
-  // ถ้าผู้เล่นอยู่ในห้องแชตนั้นอยู่แล้ว ไม่ต้องเด้งป๊อปอัปแจ้งเตือน
   if (activeRoomId === targetRoom) return;
 
   currentNotificationRoomTarget = targetRoom;
@@ -142,88 +158,15 @@ function clickNotificationBanner() {
   if (currentNotificationRoomTarget === 'master') openMasterChat();
   else if (currentNotificationRoomTarget === 'group') openGroupChat();
   else if (currentNotificationRoomTarget === 'heart') openHeartSendingRoom();
+  else if (currentNotificationRoomTarget === 'bot') openConsultantBotChat();
 
   document.getElementById('in-app-notification').classList.add('hidden');
 }
 
-// สลับลำดับ DOM ให้ห้องล่าสุดมี order น้อยลงเรื่อยๆ (ขึ้นมาด้านบนสุด)
 function moveChannelToTop(channelKey) {
   chatOrderCounter--;
   const channelEl = document.getElementById(`channel-${channelKey}`);
   if (channelEl) channelEl.style.order = chatOrderCounter;
-}
-
-// 3. GEMINI API INTEGRATION SYSTEM
-function loadApiKeyFromStorage() {
-  const savedKey = localStorage.getItem(`lumen_gemini_key_${userEmail}`);
-  if (savedKey) {
-    geminiApiKey = savedKey;
-    document.getElementById('gemini-api-key').value = savedKey;
-    updateApiStatus('connected', 'Saved & Ready');
-  } else {
-    updateApiStatus('disconnected', 'Disconnected');
-  }
-}
-
-function updateApiStatus(state, text) {
-  const badge = document.getElementById('api-status-badge');
-  const dot = document.getElementById('api-status-dot');
-  const txt = document.getElementById('api-status-text');
-  if (!badge || !dot || !txt) return;
-
-  if (state === 'connected') {
-    badge.className = "flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-emerald-100 text-[10px] text-emerald-700 font-bold";
-    dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
-    txt.textContent = text || "Connected";
-  } else if (state === 'testing') {
-    badge.className = "flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-amber-100 text-[10px] text-amber-700 font-bold";
-    dot.className = "w-2 h-2 rounded-full bg-amber-500 animate-ping";
-    txt.textContent = "Testing...";
-  } else {
-    badge.className = "flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-[10px] text-slate-500 font-bold";
-    dot.className = "w-2 h-2 rounded-full bg-slate-400";
-    txt.textContent = text || "Disconnected";
-  }
-}
-
-function saveGeminiApiKey() {
-  const keyInput = document.getElementById('gemini-api-key').value.trim();
-  if (!keyInput) {
-    localStorage.removeItem(`lumen_gemini_key_${userEmail}`);
-    geminiApiKey = '';
-    updateApiStatus('disconnected', 'Disconnected');
-    alert('API Key removed.');
-    return;
-  }
-  geminiApiKey = keyInput;
-  localStorage.setItem(`lumen_gemini_key_${userEmail}`, geminiApiKey);
-  updateApiStatus('connected', 'Saved');
-  alert('Gemini API Key saved successfully!');
-}
-
-async function testGeminiConnection() {
-  const keyInput = document.getElementById('gemini-api-key').value.trim();
-  if (!keyInput) { alert('Please enter a Gemini API Key first!'); return; }
-  updateApiStatus('testing', 'Testing...');
-
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyInput}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: "Hello, reply with OK if connected." }] }] })
-    });
-
-    if (response.ok) {
-      updateApiStatus('connected', 'Connected');
-      alert('✅ Connection Successful! Gemini API is working properly.');
-    } else {
-      updateApiStatus('disconnected', 'Invalid Key');
-      alert('❌ Connection Failed! Please check your API Key.');
-    }
-  } catch (err) {
-    updateApiStatus('disconnected', 'Error');
-    alert('❌ Connection Error: ' + err.message);
-  }
 }
 
 // 4. MASTER CHAT FLOW
@@ -400,7 +343,7 @@ function renderProfileCardInChat(key, targetStreamId = 'group-stream') {
   stream.scrollTop = stream.scrollHeight;
 }
 
-// 6. GROUP CHAT ENGINE
+// 6. GROUP CHAT ENGINE & CHOICES SYSTEM
 function openGroupChat() {
   activeRoomId = 'group';
   document.getElementById('main-header').classList.add('hidden');
@@ -441,12 +384,8 @@ function processGroupQueue() {
   } else if (item.type === 'card') {
     renderProfileCardInChat(item.key, 'group-stream');
     scheduleGroupNext();
-  } else if (item.type === 'player_turn') {
-    isWaitingForPlayer = true;
-    const inputBar = document.getElementById('group-player-input-bar');
-    inputBar.classList.remove('hidden');
-    document.getElementById('player-free-text').placeholder = item.prompt || 'Type response...';
-    document.getElementById('player-free-text').focus();
+  } else if (item.type === 'choices') {
+    renderPlayerChoices(item);
   } else if (item.type === 'master_event') {
     if (item.eventName === 'TRIGGER_HEART_SIGNAL') {
       document.getElementById('channel-heart').classList.remove('hidden');
@@ -455,6 +394,116 @@ function processGroupQueue() {
       saveUserData();
     }
   }
+}
+
+function renderPlayerChoices(choiceItem) {
+  const panel = document.getElementById('group-choices-panel');
+  const container = document.getElementById('choices-container');
+  const promptText = document.getElementById('choices-prompt-text');
+
+  promptText.textContent = choiceItem.prompt || 'เลือกคำตอบของคุณ:';
+  container.innerHTML = '';
+
+  choiceItem.options.forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.className = "w-full text-left p-2.5 bg-purple-50 hover:bg-purple-100/80 border border-purple-200/80 rounded-xl text-xs text-purple-900 transition active:scale-[0.99] font-medium shadow-xs";
+    btn.textContent = opt.text;
+    btn.onclick = () => selectChoiceOption(opt);
+    container.appendChild(btn);
+  });
+
+  panel.classList.remove('hidden');
+}
+
+function selectChoiceOption(optionObj) {
+  document.getElementById('group-choices-panel').classList.add('hidden');
+
+  // 1. แสดงข้อความตัวเลือกของผู้เล่นลงแชต
+  addUserBubble(document.getElementById('group-stream'), optionObj.text);
+
+  // 2. คำนวณและเก็บคะแนนหัวใจไว้ซ่อนหลังบ้าน (ไม่มีการแจ้งเตือนขึ้นหน้าจอ)
+  if (optionObj.hearts) {
+    Object.entries(optionObj.hearts).forEach(([charKey, amount]) => {
+      if (characterHearts[charKey] !== undefined) {
+        characterHearts[charKey] += amount;
+      }
+    });
+    saveUserData();
+  }
+
+  // 3. แสดงข้อความตอบกลับของตัวละคร (ถ้ามี)
+  if (optionObj.replySender && optionObj.replyText) {
+    showTypingIndicator(optionObj.replySender, () => {
+      const guyKey = Object.keys(contactsData).find(k => contactsData[k].codeName === optionObj.replySender || contactsData[k].realName === optionObj.replySender);
+      const tone = guyKey ? contactsData[guyKey].bgTone : 'bg-purple-200 text-purple-800';
+      
+      renderGroupMsgBubble(optionObj.replySender, tone, optionObj.replyText);
+      triggerInAppNotification('TDL : All Group', `${optionObj.replySender}: ${optionObj.replyText}`, optionObj.replySender[0], 'group');
+      
+      scheduleGroupNext();
+    });
+  } else {
+    scheduleGroupNext();
+  }
+}
+
+// 7. CONSULTANT BOT CHAT (สุ่มเปิดดูคะแนนหัวใจลับทุก 7 วัน)
+function openConsultantBotChat() {
+  activeRoomId = 'bot';
+  document.getElementById('main-header').classList.add('hidden');
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
+  document.getElementById('chat-inside-header').classList.remove('hidden');
+  document.getElementById('active-chat-title').textContent = 'LUMEN Counselor 🤖';
+  document.getElementById('room-bot').classList.remove('hidden');
+  document.getElementById('bot-unread-dot').classList.add('hidden');
+
+  document.getElementById('bot-day-num').textContent = currentDay;
+  document.getElementById('bot-insight-result').classList.add('hidden');
+  document.getElementById('bot-guy-select-panel').classList.remove('hidden');
+
+  const container = document.getElementById('bot-guy-buttons');
+  container.innerHTML = '';
+
+  const guysList = [
+    { key: 'chenxu', name: 'Chen Xu (เฉินซวี่)' },
+    { key: 'xiyao', name: 'Xia Xiyao (เซี่ยซีเหยา)' },
+    { key: 'wenjun', name: 'Wen Jun (เวินจวิ้น)' },
+    { key: 'guyan', name: 'Gu Yan (กู้เยี่ยน)' }
+  ];
+
+  guysList.forEach(guy => {
+    const btn = document.createElement('button');
+    btn.className = "w-full bg-white hover:bg-emerald-50 border border-emerald-200 text-purple-950 p-3 rounded-xl text-xs font-bold transition flex items-center justify-between shadow-xs";
+    btn.innerHTML = `<span>🔍 สุ่มตรวจความชอบของ: ${guy.name}</span><span class="text-emerald-600">Select →</span>`;
+    btn.onclick = () => revealGuyHeartInsight(guy.key);
+    container.appendChild(btn);
+  });
+}
+
+function revealGuyHeartInsight(guyKey) {
+  const score = characterHearts[guyKey] || 0;
+  const person = contactsData[guyKey];
+
+  const analysisTexts = {
+    chenxu: score >= 4 
+      ? `"เฉินซวี่ประทับใจความสงบและความเข้าอกเข้าใจของคุณมากๆ เขามองคุณเป็นคนที่คุยด้วยแล้วสบายใจที่สุดในกลุ่ม"` 
+      : `"เฉินซวี่มองคุณเป็นเพื่อนร่วมรายการที่มีมารยาทดี แต่เขายังเปิดใจให้คุณไม่เต็มที่ ลองหาจังหวะคุยเรื่องลึกซึ้งกว่านี้ดูนะ"`,
+    xiyao: score >= 4 
+      ? `"เซี่ยซีเหยาชอบพลังงานบวกของคุณมาก! ทุกครั้งที่คุณตอบ เขาจะยิ้มออกมาโดยไม่รู้ตัวเลยล่ะ"` 
+      : `"เซี่ยซีเหยาคิดว่าคุณเป็นพี่สาว/เพื่อนที่น่ารัก แต่เขายังไม่แน่ใจว่าคุณสนใจเขาจริงๆ หรือเปล่า"`,
+    wenjun: score >= 4 
+      ? `"เวินจวิ้นรู้สึกถึงเคมีบางอย่างที่ดึงดูดระหว่างคุณกับเขา เขามักจะแอบมองคำตอบของคุณก่อนใครเสมอ"` 
+      : `"เวินจวิ้นมองคุณด้วยสายตาสังเกตการณ์อย่างสุภาพ เขากำลังรอรสนิยมและความคิดที่แท้จริงของคุณอยู่"`,
+    guyan: score >= 4 
+      ? `"กู้เยี่ยนที่ปกติไม่สนใจใคร ถึงกับแอบบันทึกคำพูดของคุณไว้ในใจ! เขารู้สึกว่าคุณเข้าใจโลกของเขา"` 
+      : `"กู้เยี่ยนยังคงทำตัวเย็นชาและเก็บตัว แต่เขาก็ไม่ได้ปฏิเสธข้อความของคุณนะ แค่ต้องใช้เวลาเพิ่มอีกนิด"`
+  };
+
+  document.getElementById('bot-guy-select-panel').classList.add('hidden');
+  document.getElementById('bot-result-name').textContent = person.realName;
+  document.getElementById('bot-result-score').textContent = `❤️ ${score} Points`;
+  document.getElementById('bot-result-desc').textContent = analysisTexts[guyKey] || `"เขากำลังจับตาดูคุณอยู่อย่างเงียบๆ..."`;
+  document.getElementById('bot-insight-result').classList.remove('hidden');
 }
 
 function scheduleGroupNext() {
@@ -524,18 +573,6 @@ function renderGroupImgBubble(sender, tone, imgSrc) {
   document.getElementById('group-last-msg').textContent = `${sender}: [Photo 📷]`;
 }
 
-function sendPlayerFreeMessage() {
-  const field = document.getElementById('player-free-text');
-  const text = field.value.trim();
-  if (!text) return;
-  field.value = '';
-  document.getElementById('group-player-input-bar').classList.add('hidden');
-  isWaitingForPlayer = false;
-
-  addUserBubble(document.getElementById('group-stream'), text);
-  processGroupQueue();
-}
-
 function addMasterMsg(txt) {
   const stream = document.getElementById('master-stream');
   const b = document.createElement('div');
@@ -553,7 +590,7 @@ function addUserBubble(container, txt) {
   container.scrollTop = container.scrollHeight;
 }
 
-// 7. OTHER TABS & UTILS
+// 8. OTHER TABS & UTILS
 function switchTab(tabKey) {
   exitActiveChat();
   document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
@@ -582,6 +619,7 @@ function exitActiveChat() {
   document.getElementById('room-master').classList.add('hidden');
   document.getElementById('room-group').classList.add('hidden');
   document.getElementById('room-heart').classList.add('hidden');
+  document.getElementById('room-bot').classList.add('hidden');
   document.getElementById('main-header').classList.remove('hidden');
   document.getElementById('tab-chats').classList.remove('hidden');
 }
@@ -622,6 +660,7 @@ function jumpToHistoryDay(dayNum) {
   currentDay = dayNum;
   document.getElementById('my-day-indicator').textContent = `${currentDay} / 30`;
   saveUserData();
+  checkWeeklyBotTrigger();
   alert(`Jumped back to Day ${dayNum}!`);
   switchTab('chats');
   openGroupChat();
@@ -671,6 +710,7 @@ function restartGameNewLoop() {
   }
 }
 
+// แสดงรายการผู้ติดต่อ (ซ่อนแต้มหัวใจไว้อย่างสมบูรณ์)
 function renderPeopleTab() {
   const list = document.getElementById('people-friends-list');
   list.innerHTML = '';
@@ -691,7 +731,10 @@ function renderPeopleTab() {
 
     item.innerHTML = `
       ${avatarHTML}
-      <div class="flex-1 min-w-0"><h4 class="text-xs font-bold text-purple-950 truncate">${displayName}</h4><p class="text-[10px] text-purple-400 mt-0.5 truncate">${subTitle}</p></div>
+      <div class="flex-1 min-w-0">
+        <h4 class="text-xs font-bold text-purple-950 truncate">${displayName}</h4>
+        <p class="text-[10px] text-purple-400 mt-0.5 truncate">${subTitle}</p>
+      </div>
       <span class="text-[10px] text-purple-300">View &gt;</span>
     `;
     list.appendChild(item);
@@ -779,20 +822,6 @@ function applyChatTheme(theme) {
   if (theme === 'pink') bg.className = 'flex-1 overflow-hidden relative flex flex-col bg-[#fff5f7] pb-14';
   if (theme === 'blue') bg.className = 'flex-1 overflow-hidden relative flex flex-col bg-[#f0f9ff] pb-14';
   if (theme === 'dark') bg.className = 'flex-1 overflow-hidden relative flex flex-col bg-slate-900 text-white pb-14';
-}
-
-function changeLanguage(lang) {
-  currentLang = lang;
-  if (lang === 'th') {
-    document.getElementById('label-tap-next').textContent = 'แตะหน้าจอเพื่ออ่านข้อความถัดไป';
-    document.getElementById('btn-send-msg').textContent = 'ส่ง';
-  } else if (lang === 'zh') {
-    document.getElementById('label-tap-next').textContent = '点击屏幕阅读下一条消息';
-    document.getElementById('btn-send-msg').textContent = '发送';
-  } else {
-    document.getElementById('label-tap-next').textContent = 'Tap to read next message';
-    document.getElementById('btn-send-msg').textContent = 'Send';
-  }
 }
 
 function openSwitchAccountModal() {
