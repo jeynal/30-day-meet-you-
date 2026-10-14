@@ -16,7 +16,7 @@ let chatOrderCounter = 100;
 
 // Hidden Affinity Points System
 let characterHearts = {
-  chenxu: 1, // Chen Xu likes the player from the start
+  chenxu: 1, // Chen Xu likes player from Day 1
   xiyao: 0,
   wenjun: 0,
   guyan: 0,
@@ -51,7 +51,6 @@ const contactsData = {
   heartAdmin: { codeName: 'Midnight Heart', realName: 'Midnight Heart', occupation: 'Heart Signal Manager', avatarUrl: '', bgTone: 'bg-pink-100 text-fuchsia-800', isSpecial: true }
 };
 
-// Repository of anonymous secret messages for each guy
 const guySecretMessages = {
   chenxu: {
     day1: "Thanks for the kind write-up",
@@ -83,18 +82,21 @@ const guySecretMessages = {
   }
 };
 
-// 1. SYSTEM INITIALIZATION & LOGIN
+// Safe DOM initialization
 window.addEventListener('DOMContentLoaded', () => {
   const savedEmail = localStorage.getItem('lumen_user_email');
   if (savedEmail) {
     userEmail = savedEmail;
     loadUserData();
-    document.getElementById('modal-email-login').classList.add('hidden');
+    const loginModal = document.getElementById('modal-email-login');
+    if (loginModal) loginModal.classList.add('hidden');
   }
 });
 
 function submitEmailLogin() {
-  const input = document.getElementById('login-email-input').value.trim();
+  const inputEl = document.getElementById('login-email-input');
+  if (!inputEl) return;
+  const input = inputEl.value.trim();
   if (!input || !input.includes('@')) {
     alert('Please enter a valid email address!');
     return;
@@ -102,7 +104,8 @@ function submitEmailLogin() {
   userEmail = input;
   localStorage.setItem('lumen_user_email', userEmail);
   loadUserData();
-  document.getElementById('modal-email-login').classList.add('hidden');
+  const loginModal = document.getElementById('modal-email-login');
+  if (loginModal) loginModal.classList.add('hidden');
 }
 
 function saveUserData() {
@@ -114,35 +117,39 @@ function saveUserData() {
 function loadUserData() {
   const raw = localStorage.getItem(`lumen_save_${userEmail}`);
   if (raw) {
-    const data = JSON.parse(raw);
-    currentDay = data.currentDay || 1;
-    maxUnlockedDay = data.maxUnlockedDay || 1;
-    playerProfile = data.playerProfile || playerProfile;
-    endingBookRecords = data.endingBookRecords || [];
-    characterHearts = data.characterHearts || characterHearts;
+    try {
+      const data = JSON.parse(raw);
+      currentDay = data.currentDay || 1;
+      maxUnlockedDay = data.maxUnlockedDay || 1;
+      playerProfile = data.playerProfile || playerProfile;
+      endingBookRecords = data.endingBookRecords || [];
+      characterHearts = data.characterHearts || characterHearts;
+    } catch (e) {
+      console.error("Save data parse error:", e);
+    }
   }
   updateUIFromState();
   checkWeeklyBotTrigger();
 }
 
 function updateUIFromState() {
-  document.getElementById('my-player-name').textContent = playerProfile.name;
-  document.getElementById('my-player-email').textContent = userEmail;
-  document.getElementById('more-user-email-display').textContent = userEmail;
-  document.getElementById('people-player-name').textContent = `${playerProfile.name} (You)`;
-  document.getElementById('people-player-sub').textContent = `${playerProfile.occupation} · Participant`;
-  document.getElementById('my-day-indicator').textContent = `${currentDay} / 30`;
+  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setTxt('my-player-name', playerProfile.name);
+  setTxt('my-player-email', userEmail);
+  setTxt('more-user-email-display', userEmail);
+  setTxt('people-player-name', `${playerProfile.name} (You)`);
+  setTxt('people-player-sub', `${playerProfile.occupation} · Participant`);
+  setTxt('my-day-indicator', `${currentDay} / 30`);
 
   if (playerProfile.avatarDataUrl) {
     const style = `background-image: url('${playerProfile.avatarDataUrl}'); background-size: cover; background-position: center;`;
-    document.getElementById('people-player-avatar').setAttribute('style', style);
-    document.getElementById('people-player-avatar').textContent = '';
-    document.getElementById('my-player-avatar').setAttribute('style', style);
-    document.getElementById('my-player-avatar').textContent = '';
+    ['people-player-avatar', 'my-player-avatar'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.setAttribute('style', style); el.textContent = ''; }
+    });
   }
 }
 
-// 2. CHECK BOT TRIGGER (Every 7 Days: Day 7, 14, 21, 28)
 function checkWeeklyBotTrigger() {
   const botChannel = document.getElementById('channel-bot');
   if (!botChannel) return;
@@ -150,31 +157,30 @@ function checkWeeklyBotTrigger() {
   if (currentDay > 1 && currentDay % 7 === 0) {
     botChannel.classList.remove('hidden');
     moveChannelToTop('bot');
-    triggerInAppNotification('Love Counselor 💬', `Hello ${playerProfile.name}! It's been 7 days, checking in on you...`, '💬', 'bot');
+    triggerInAppNotification('Love Counselor 💬', `Hello ${playerProfile.name}! Checking in on day ${currentDay}...`, '💬', 'bot');
   } else {
     botChannel.classList.add('hidden');
   }
 }
 
-// 3. IN-APP POPUP NOTIFICATION
 function triggerInAppNotification(title, msg, avatarText = 'M', targetRoom = 'master', avatarImgUrl = '') {
   moveChannelToTop(targetRoom);
 
-  if (targetRoom === 'master') document.getElementById('master-last-msg').textContent = msg;
-  if (targetRoom === 'group') document.getElementById('group-last-msg').textContent = msg;
-  if (targetRoom === 'heart') document.getElementById('heart-last-msg').textContent = msg;
-  if (targetRoom === 'bot') {
-    const el = document.getElementById('bot-last-msg');
-    if (el) el.textContent = msg;
-  }
+  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  if (targetRoom === 'master') setTxt('master-last-msg', msg);
+  if (targetRoom === 'group') setTxt('group-last-msg', msg);
+  if (targetRoom === 'heart') setTxt('heart-last-msg', msg);
+  if (targetRoom === 'bot') setTxt('bot-last-msg', msg);
 
   if (activeRoomId === targetRoom) return;
 
   currentNotificationRoomTarget = targetRoom;
   const notiBox = document.getElementById('in-app-notification');
   const avatarBox = document.getElementById('noti-avatar');
-  document.getElementById('noti-title').textContent = title;
-  document.getElementById('noti-body').textContent = msg;
+  if (!notiBox || !avatarBox) return;
+
+  setTxt('noti-title', title);
+  setTxt('noti-body', msg);
 
   if (avatarImgUrl) {
     avatarBox.style.backgroundImage = `url('${avatarImgUrl}')`;
@@ -200,7 +206,8 @@ function clickNotificationBanner() {
   else if (currentNotificationRoomTarget === 'heart') openHeartSendingRoom();
   else if (currentNotificationRoomTarget === 'bot') openConsultantBotChat();
 
-  document.getElementById('in-app-notification').classList.add('hidden');
+  const notiBox = document.getElementById('in-app-notification');
+  if (notiBox) notiBox.classList.add('hidden');
 }
 
 function moveChannelToTop(channelKey) {
@@ -209,17 +216,23 @@ function moveChannelToTop(channelKey) {
   if (channelEl) channelEl.style.order = chatOrderCounter;
 }
 
-// 4. MASTER CHAT FLOW
 function openMasterChat() {
   activeRoomId = 'master';
-  document.getElementById('main-header').classList.add('hidden');
+  const header = document.getElementById('main-header');
+  if (header) header.classList.add('hidden');
   document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
-  document.getElementById('chat-inside-header').classList.remove('hidden');
-  document.getElementById('active-chat-title').textContent = 'LUMEN Master';
-  document.getElementById('room-master').classList.remove('hidden');
+  
+  const insideHeader = document.getElementById('chat-inside-header');
+  if (insideHeader) insideHeader.classList.remove('hidden');
+  
+  const title = document.getElementById('active-chat-title');
+  if (title) title.textContent = 'LUMEN Master';
+  
+  const room = document.getElementById('room-master');
+  if (room) room.classList.remove('hidden');
 
   const stream = document.getElementById('master-stream');
-  if (stream.children.length === 0) {
+  if (stream && stream.children.length === 0) {
     const dayData = window.day1Data;
     if (dayData && dayData.masterDialogues) {
       masterQueue = [...dayData.masterDialogues];
@@ -231,9 +244,10 @@ function openMasterChat() {
 function processMasterQueue() {
   if (masterQueue.length === 0) return;
   const item = masterQueue.shift();
+  const stream = document.getElementById('master-stream');
 
   if (item.type === 'sys') {
-    renderSysMsg(document.getElementById('master-stream'), item.text);
+    renderSysMsg(stream, item.text);
     setTimeout(processMasterQueue, 800);
   } else if (item.type === 'master_msg') {
     addMasterMsg(item.text);
@@ -241,16 +255,19 @@ function processMasterQueue() {
     setTimeout(processMasterQueue, 1200);
   } else if (item.type === 'player_turn') {
     renderMasterInputBar(item.prompt, (text) => {
-      addUserBubble(document.getElementById('master-stream'), text);
+      addUserBubble(stream, text);
       processMasterQueue();
     });
   } else if (item.type === 'player_avatar_upload') {
-    document.getElementById('master-form-box').innerHTML = `
-      <div class="space-y-1 text-center p-2 bg-purple-50 rounded-xl border border-purple-100">
-        <label class="text-xs font-semibold text-purple-900 block">Select Profile Avatar Image:</label>
-        <input type="file" accept="image/*" onchange="handleMasterAvatarUpload(event)" class="text-xs text-purple-900 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:bg-pink-100 file:text-fuchsia-600">
-      </div>
-    `;
+    const box = document.getElementById('master-form-box');
+    if (box) {
+      box.innerHTML = `
+        <div class="space-y-1 text-center p-2 bg-purple-50 rounded-xl border border-purple-100">
+          <label class="text-xs font-semibold text-purple-900 block">Select Profile Avatar Image:</label>
+          <input type="file" accept="image/*" onchange="handleMasterAvatarUpload(event)" class="text-xs text-purple-900 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:bg-pink-100 file:text-fuchsia-600">
+        </div>
+      `;
+    }
   } else if (item.type === 'player_reg_flow') {
     startMasterRegQuestions(0);
   } else if (item.type === 'card') {
@@ -258,14 +275,18 @@ function processMasterQueue() {
     setTimeout(processMasterQueue, 1000);
   } else if (item.type === 'master_event') {
     if (item.eventName === 'OPEN_GROUP_CHANNEL') {
-      document.getElementById('master-last-msg').textContent = 'TDL All Group Unlocked!';
-      document.getElementById('master-unread-dot').classList.add('hidden');
-      document.getElementById('channel-group').classList.remove('hidden');
+      const msg = document.getElementById('master-last-msg');
+      if (msg) msg.textContent = 'TDL All Group Unlocked!';
+      const dot = document.getElementById('master-unread-dot');
+      if (dot) dot.classList.add('hidden');
+      const grp = document.getElementById('channel-group');
+      if (grp) grp.classList.remove('hidden');
       moveChannelToTop('group');
       
       triggerInAppNotification('TDL : All Group', 'Lounge Activated! Tap to join.', 'G', 'group');
 
-      document.getElementById('master-form-box').innerHTML = `<button onclick="exitActiveChat(); openGroupChat();" class="w-full bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white font-bold py-2.5 rounded-xl text-xs">Enter TDL All Group Lounge →</button>`;
+      const box = document.getElementById('master-form-box');
+      if (box) box.innerHTML = `<button onclick="exitActiveChat(); openGroupChat();" class="w-full bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white font-bold py-2.5 rounded-xl text-xs">Enter TDL All Group Lounge →</button>`;
       saveUserData();
     }
   }
@@ -279,7 +300,8 @@ function handleMasterAvatarUpload(event) {
     playerProfile.avatarDataUrl = e.target.result;
     updateUIFromState();
     addUserBubble(document.getElementById('master-stream'), '📷 Avatar photo uploaded!');
-    document.getElementById('master-form-box').innerHTML = '';
+    const box = document.getElementById('master-form-box');
+    if (box) box.innerHTML = '';
     processMasterQueue();
   };
   reader.readAsDataURL(file);
@@ -296,7 +318,8 @@ const regQuestions = [
 
 function startMasterRegQuestions(idx) {
   if (idx >= regQuestions.length) {
-    document.getElementById('master-form-box').innerHTML = '';
+    const box = document.getElementById('master-form-box');
+    if (box) box.innerHTML = '';
     processMasterQueue();
     return;
   }
@@ -312,6 +335,7 @@ function startMasterRegQuestions(idx) {
 
 function renderMasterInputBar(placeholder, cb) {
   const box = document.getElementById('master-form-box');
+  if (!box) return;
   box.innerHTML = `
     <div class="flex gap-2">
       <input type="text" id="master-input-field" class="flex-1 bg-purple-50/50 border border-purple-200 rounded-xl px-3.5 py-2 text-xs text-purple-950 focus:outline-none" placeholder="${placeholder}">
@@ -320,16 +344,17 @@ function renderMasterInputBar(placeholder, cb) {
   `;
   const field = document.getElementById('master-input-field');
   const btn = document.getElementById('master-send-btn');
-  field.focus();
-  btn.onclick = () => {
-    const val = field.value.trim();
-    if (!val) return;
-    box.innerHTML = '';
-    cb(val);
-  };
+  if (field) field.focus();
+  if (btn) {
+    btn.onclick = () => {
+      const val = field.value.trim();
+      if (!val) return;
+      box.innerHTML = '';
+      cb(val);
+    };
+  }
 }
 
-// 5. POLAROID PROFILE CARD RENDERER
 function createPolaroidCardHTML(cardData, isPlayer = false) {
   const nameAge = isPlayer ? `${playerProfile.name}, ${playerProfile.age}` : `${cardData.realName}, ${cardData.age}`;
   const occ = isPlayer ? playerProfile.occupation : cardData.occupation;
@@ -351,7 +376,6 @@ function createPolaroidCardHTML(cardData, isPlayer = false) {
         <span>Day ${currentDay}. Profile : ${nameAge.split(',')[0]}</span>
         <span class="tracking-widest font-sans font-bold text-pink-400">30 DAYS TO LOVE</span>
       </div>
-      
       <div class="bg-white p-2.5 rounded-lg border border-purple-100 shadow-sm mb-3">
         <div class="aspect-[4/3] w-full rounded overflow-hidden shadow-inner flex flex-col justify-end p-2 ${!playerProfile.avatarDataUrl && isPlayer ? 'bg-purple-200 flex items-center justify-center text-xs font-sans text-purple-700' : ''}" style="${photoStyle}">
           ${!playerProfile.avatarDataUrl && isPlayer ? '📷 Your Photo' : ''}
@@ -361,7 +385,6 @@ function createPolaroidCardHTML(cardData, isPlayer = false) {
           <span>THE AFTERIMAGE PARADOX</span>
         </div>
       </div>
-
       <div class="space-y-2 text-xs text-purple-950 font-sans">
         <div class="border-b border-purple-200/60 pb-1 flex justify-between"><strong class="font-typewriter text-purple-800">Name/Age:</strong> <span>${nameAge}</span></div>
         <div class="border-b border-purple-200/60 pb-1 flex justify-between"><strong class="font-typewriter text-purple-800">Occupation:</strong> <span>${occ}</span></div>
@@ -375,23 +398,32 @@ function createPolaroidCardHTML(cardData, isPlayer = false) {
 }
 
 function renderProfileCardInChat(key, targetStreamId = 'group-stream') {
+  const stream = document.getElementById(targetStreamId);
+  if (!stream) return;
   const b = document.createElement('div');
   b.className = "chat-bubble my-2";
   b.innerHTML = (key === 'player') ? createPolaroidCardHTML(null, true) : createPolaroidCardHTML(contactsData[key], false);
-  const stream = document.getElementById(targetStreamId);
   stream.appendChild(b);
   stream.scrollTop = stream.scrollHeight;
 }
 
-// 6. GROUP CHAT ENGINE & CHOICES SYSTEM
 function openGroupChat() {
   activeRoomId = 'group';
-  document.getElementById('main-header').classList.add('hidden');
+  const header = document.getElementById('main-header');
+  if (header) header.classList.add('hidden');
   document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
-  document.getElementById('chat-inside-header').classList.remove('hidden');
-  document.getElementById('active-chat-title').textContent = 'TDL : All Group';
-  document.getElementById('room-group').classList.remove('hidden');
-  document.getElementById('group-unread-dot').classList.add('hidden');
+  
+  const insideHeader = document.getElementById('chat-inside-header');
+  if (insideHeader) insideHeader.classList.remove('hidden');
+  
+  const title = document.getElementById('active-chat-title');
+  if (title) title.textContent = 'TDL : All Group';
+  
+  const room = document.getElementById('room-group');
+  if (room) room.classList.remove('hidden');
+  
+  const dot = document.getElementById('group-unread-dot');
+  if (dot) dot.classList.add('hidden');
 
   if (dialogueQueue.length === 0) {
     const dayData = window[`day${currentDay}Data`];
@@ -428,7 +460,8 @@ function processGroupQueue() {
     renderPlayerChoices(item);
   } else if (item.type === 'master_event') {
     if (item.eventName === 'TRIGGER_HEART_SIGNAL') {
-      document.getElementById('channel-heart').classList.remove('hidden');
+      const channel = document.getElementById('channel-heart');
+      if (channel) channel.classList.remove('hidden');
       moveChannelToTop('heart');
       triggerInAppNotification('<Heart Sending>', 'Midnight Heart Signal Activated! 💌', '💌', 'heart');
       saveUserData();
@@ -440,8 +473,9 @@ function renderPlayerChoices(choiceItem) {
   const panel = document.getElementById('group-choices-panel');
   const container = document.getElementById('choices-container');
   const promptText = document.getElementById('choices-prompt-text');
+  if (!panel || !container) return;
 
-  promptText.textContent = choiceItem.prompt || 'Select your response:';
+  if (promptText) promptText.textContent = choiceItem.prompt || 'Select your response:';
   container.innerHTML = '';
 
   choiceItem.options.forEach((opt) => {
@@ -456,7 +490,8 @@ function renderPlayerChoices(choiceItem) {
 }
 
 function selectChoiceOption(optionObj) {
-  document.getElementById('group-choices-panel').classList.add('hidden');
+  const panel = document.getElementById('group-choices-panel');
+  if (panel) panel.classList.add('hidden');
 
   addUserBubble(document.getElementById('group-stream'), optionObj.text);
 
@@ -484,19 +519,23 @@ function selectChoiceOption(optionObj) {
   }
 }
 
-// 7. CONSULTANT BOT CHATROOM
 function openConsultantBotChat() {
   activeRoomId = 'bot';
-  document.getElementById('main-header').classList.add('hidden');
+  const header = document.getElementById('main-header');
+  if (header) header.classList.add('hidden');
   document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
-  document.getElementById('chat-inside-header').classList.remove('hidden');
-  document.getElementById('active-chat-title').textContent = 'Love Counselor 💬';
   
-  const botRoom = document.getElementById('room-bot');
-  if (botRoom) botRoom.classList.remove('hidden');
+  const insideHeader = document.getElementById('chat-inside-header');
+  if (insideHeader) insideHeader.classList.remove('hidden');
+  
+  const title = document.getElementById('active-chat-title');
+  if (title) title.textContent = 'Love Counselor 💬';
+  
+  const room = document.getElementById('room-bot');
+  if (room) room.classList.remove('hidden');
 
-  const unreadDot = document.getElementById('bot-unread-dot');
-  if (unreadDot) unreadDot.classList.add('hidden');
+  const dot = document.getElementById('bot-unread-dot');
+  if (dot) dot.classList.add('hidden');
 
   const stream = document.getElementById('bot-stream');
   if (stream && stream.children.length === 0) {
@@ -510,6 +549,7 @@ function openConsultantBotChat() {
 
 function addBotBubble(txt) {
   const stream = document.getElementById('bot-stream');
+  if (!stream) return;
   const b = document.createElement('div');
   b.className = "chat-bubble flex items-start space-x-2.5 my-2";
   b.innerHTML = `
@@ -551,7 +591,8 @@ function showBotGuyChoices() {
 }
 
 function selectBotGuyChoice(guyKey, guyName) {
-  document.getElementById('bot-choices-panel').classList.add('hidden');
+  const panel = document.getElementById('bot-choices-panel');
+  if (panel) panel.classList.add('hidden');
   addUserBubble(document.getElementById('bot-stream'), `I want to check on ${guyName}`);
 
   const score = characterHearts[guyKey] || 0;
@@ -580,16 +621,22 @@ function selectBotGuyChoice(guyKey, guyName) {
   }, 800);
 }
 
-// 8. HEART SENDING ENGINE
 let selectedHeartTargetKey = null;
 
 function openHeartSendingRoom() {
   activeRoomId = 'heart';
-  document.getElementById('main-header').classList.add('hidden');
+  const header = document.getElementById('main-header');
+  if (header) header.classList.add('hidden');
   document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
-  document.getElementById('chat-inside-header').classList.remove('hidden');
-  document.getElementById('active-chat-title').textContent = '<Heart Sending>';
-  document.getElementById('room-heart').classList.remove('hidden');
+  
+  const insideHeader = document.getElementById('chat-inside-header');
+  if (insideHeader) insideHeader.classList.remove('hidden');
+  
+  const title = document.getElementById('active-chat-title');
+  if (title) title.textContent = '<Heart Sending>';
+  
+  const room = document.getElementById('room-heart');
+  if (room) room.classList.remove('hidden');
 
   const stream = document.getElementById('heart-stream');
   if (stream && stream.children.length === 0) {
@@ -606,6 +653,7 @@ function openHeartSendingRoom() {
 
 function addHeartAdminMsg(txt) {
   const stream = document.getElementById('heart-stream');
+  if (!stream) return;
   const b = document.createElement('div');
   b.className = "chat-bubble flex items-start space-x-2.5 my-2";
   b.innerHTML = `
@@ -617,7 +665,8 @@ function addHeartAdminMsg(txt) {
   `;
   stream.appendChild(b);
   stream.scrollTop = stream.scrollHeight;
-  document.getElementById('heart-last-msg').textContent = `Heart Manager: ${txt}`;
+  const msg = document.getElementById('heart-last-msg');
+  if (msg) msg.textContent = `Heart Manager: ${txt}`;
 }
 
 function showHeartGuyChoices() {
@@ -646,31 +695,38 @@ function showHeartGuyChoices() {
 
 function selectHeartGuyTarget(guyKey, guyName) {
   selectedHeartTargetKey = guyKey;
-  document.getElementById('heart-choices-panel').classList.add('hidden');
+  const panel = document.getElementById('heart-choices-panel');
+  if (panel) panel.classList.add('hidden');
   addUserBubble(document.getElementById('heart-stream'), `Sending my heart to ${guyName}`);
 
   setTimeout(() => {
     addHeartAdminMsg(`You can leave a short secret message along with your heart... What would you like to say to him?`);
-    document.getElementById('heart-input-panel').classList.remove('hidden');
+    const inputPanel = document.getElementById('heart-input-panel');
+    if (inputPanel) inputPanel.classList.remove('hidden');
   }, 800);
 }
 
 function submitHeartMessageFlow() {
   const inputEl = document.getElementById('heart-text-input');
+  if (!inputEl) return;
   const msgText = inputEl.value.trim();
   if (!msgText) return;
 
-  document.getElementById('heart-input-panel').classList.add('hidden');
+  const inputPanel = document.getElementById('heart-input-panel');
+  if (inputPanel) inputPanel.classList.add('hidden');
+  
   addUserBubble(document.getElementById('heart-stream'), `"${msgText}"`);
 
-  // Show Sweet Popup Notification
   const popup = document.getElementById('sweet-popup');
-  document.getElementById('sweet-popup-title').textContent = 'Delivering your feelings...';
-  document.getElementById('sweet-popup-sub').textContent = 'Heart Signal delivered successfully ❤️';
-  popup.classList.remove('hidden');
+  const pTitle = document.getElementById('sweet-popup-title');
+  const pSub = document.getElementById('sweet-popup-sub');
+  
+  if (pTitle) pTitle.textContent = 'Delivering your feelings...';
+  if (pSub) pSub.textContent = 'Heart Signal delivered successfully ❤️';
+  if (popup) popup.classList.remove('hidden');
 
   setTimeout(() => {
-    popup.classList.add('hidden');
+    if (popup) popup.classList.add('hidden');
 
     addHeartAdminMsg(`Your heart and secret note have been delivered ✨`);
     
@@ -685,11 +741,11 @@ function submitHeartMessageFlow() {
   }, 1800);
 }
 
-// Render Heart Message Ticket Cards
 function renderReceivedHeartCards() {
   const stream = document.getElementById('heart-stream');
+  if (!stream) return;
   
-  let qualifiedGuys = ['chenxu']; // Chen Xu always sends a heart
+  let qualifiedGuys = ['chenxu'];
 
   if (characterHearts.xiyao >= 2) qualifiedGuys.push('xiyao');
   if (characterHearts.wenjun >= 2) qualifiedGuys.push('wenjun');
@@ -731,7 +787,8 @@ function renderReceivedHeartCards() {
 function scheduleGroupNext() {
   if (speedMode === 3) {
     waitingForTap = true;
-    document.getElementById('next-tap-bar').classList.remove('hidden');
+    const bar = document.getElementById('next-tap-bar');
+    if (bar) bar.classList.remove('hidden');
   } else {
     setTimeout(processGroupQueue, delays[speedMode]);
   }
@@ -744,9 +801,13 @@ function advanceDialogue() {
 function showTypingIndicator(sender, cb) {
   if (speedMode === 3) { cb(); return; }
   const indicator = document.getElementById('typing-indicator');
-  indicator.classList.remove('hidden');
-  document.getElementById('typing-name').textContent = `${sender} is typing...`;
-  setTimeout(() => { indicator.classList.add('hidden'); cb(); }, Math.min(650, delays[speedMode]));
+  if (indicator) indicator.classList.remove('hidden');
+  const name = document.getElementById('typing-name');
+  if (name) name.textContent = `${sender} is typing...`;
+  setTimeout(() => { 
+    if (indicator) indicator.classList.add('hidden'); 
+    cb(); 
+  }, Math.min(650, delays[speedMode]));
 }
 
 function renderGroupSysMsg(txt) {
@@ -754,6 +815,7 @@ function renderGroupSysMsg(txt) {
 }
 
 function renderSysMsg(container, txt) {
+  if (!container) return;
   const b = document.createElement('div');
   b.className = "flex justify-center my-2 chat-bubble";
   b.innerHTML = `<div class="bg-purple-100/60 text-purple-600 border border-purple-200/50 px-3.5 py-1.5 rounded-full text-[11px] max-w-[90%] text-center">${txt}</div>`;
@@ -763,6 +825,7 @@ function renderSysMsg(container, txt) {
 
 function renderGroupMsgBubble(sender, tone, text) {
   const stream = document.getElementById('group-stream');
+  if (!stream) return;
   const b = document.createElement('div');
   b.className = "chat-bubble flex items-start space-x-2.5";
   b.innerHTML = `
@@ -774,11 +837,13 @@ function renderGroupMsgBubble(sender, tone, text) {
   `;
   stream.appendChild(b);
   stream.scrollTop = stream.scrollHeight;
-  document.getElementById('group-last-msg').textContent = `${sender}: ${text}`;
+  const msg = document.getElementById('group-last-msg');
+  if (msg) msg.textContent = `${sender}: ${text}`;
 }
 
 function renderGroupImgBubble(sender, tone, imgSrc) {
   const stream = document.getElementById('group-stream');
+  if (!stream) return;
   const b = document.createElement('div');
   b.className = "chat-bubble flex items-start space-x-2.5";
   b.innerHTML = `
@@ -792,11 +857,13 @@ function renderGroupImgBubble(sender, tone, imgSrc) {
   `;
   stream.appendChild(b);
   stream.scrollTop = stream.scrollHeight;
-  document.getElementById('group-last-msg').textContent = `${sender}: [Photo 📷]`;
+  const msg = document.getElementById('group-last-msg');
+  if (msg) msg.textContent = `${sender}: [Photo 📷]`;
 }
 
 function addMasterMsg(txt) {
   const stream = document.getElementById('master-stream');
+  if (!stream) return;
   const b = document.createElement('div');
   b.className = "chat-bubble flex items-start space-x-2";
   b.innerHTML = `<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-fuchsia-400 to-pink-400 flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5">M</div><div class="bg-white border border-purple-100 text-purple-900 px-3.5 py-2 rounded-2xl rounded-tl-none text-xs max-w-[85%] shadow-sm">${txt}</div>`;
@@ -805,6 +872,7 @@ function addMasterMsg(txt) {
 }
 
 function addUserBubble(container, txt) {
+  if (!container) return;
   const b = document.createElement('div');
   b.className = "chat-bubble flex justify-end";
   b.innerHTML = `<div class="bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white px-3.5 py-2 rounded-2xl rounded-tr-none text-xs max-w-[80%] shadow-sm">${txt}</div>`;
@@ -812,7 +880,6 @@ function addUserBubble(container, txt) {
   container.scrollTop = container.scrollHeight;
 }
 
-// 9. OTHER TABS & UTILS
 function switchTab(tabKey) {
   exitActiveChat();
   document.querySelectorAll('.tab-page').forEach(p => p.classList.add('hidden'));
@@ -830,39 +897,43 @@ function switchTab(tabKey) {
   }
 
   const titles = { chats: 'Chats', people: 'People', story: 'Story', my: 'MY', more: 'More' };
-  document.getElementById('header-page-title').textContent = titles[tabKey] || 'Chats';
+  const hTitle = document.getElementById('header-page-title');
+  if (hTitle) hTitle.textContent = titles[tabKey] || 'Chats';
 
   if (tabKey === 'people') renderPeopleTab();
 }
 
 function exitActiveChat() {
   activeRoomId = null;
-  document.getElementById('chat-inside-header').classList.add('hidden');
-  document.getElementById('room-master').classList.add('hidden');
-  document.getElementById('room-group').classList.add('hidden');
-  document.getElementById('room-heart').classList.add('hidden');
-  
-  const botRoom = document.getElementById('room-bot');
-  if (botRoom) botRoom.classList.add('hidden');
+  ['chat-inside-header', 'room-master', 'room-group', 'room-heart', 'room-bot'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
 
-  document.getElementById('main-header').classList.remove('hidden');
-  document.getElementById('tab-chats').classList.remove('hidden');
+  const mainHeader = document.getElementById('main-header');
+  if (mainHeader) mainHeader.classList.remove('hidden');
+  const tabChats = document.getElementById('tab-chats');
+  if (tabChats) tabChats.classList.remove('hidden');
 }
 
 function switchMySubTab(subKey) {
-  document.getElementById('subtab-mystory').classList.add('hidden');
-  document.getElementById('subtab-ending').classList.add('hidden');
-  document.getElementById('subtab-history').classList.add('hidden');
+  ['subtab-mystory', 'subtab-ending', 'subtab-history'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
 
   document.querySelectorAll('#tab-my button').forEach(b => {
     b.classList.remove('text-fuchsia-600', 'border-b-2', 'border-fuchsia-500');
     b.classList.add('text-purple-300');
   });
 
-  document.getElementById(`subtab-${subKey}`).classList.remove('hidden');
+  const sub = document.getElementById(`subtab-${subKey}`);
+  if (sub) sub.classList.remove('hidden');
   const btn = document.getElementById(`subtab-btn-${subKey}`);
-  btn.classList.add('text-fuchsia-600', 'border-b-2', 'border-fuchsia-500');
-  btn.classList.remove('text-purple-300');
+  if (btn) {
+    btn.classList.add('text-fuchsia-600', 'border-b-2', 'border-fuchsia-500');
+    btn.classList.remove('text-purple-300');
+  }
 
   if (subKey === 'history') renderHistoryTab();
   if (subKey === 'ending') renderEndingBookTab();
@@ -870,6 +941,7 @@ function switchMySubTab(subKey) {
 
 function renderHistoryTab() {
   const container = document.getElementById('history-days-list');
+  if (!container) return;
   container.innerHTML = '';
   for (let d = 1; d <= maxUnlockedDay; d++) {
     const isCurrent = (d === currentDay);
@@ -883,7 +955,8 @@ function renderHistoryTab() {
 
 function jumpToHistoryDay(dayNum) {
   currentDay = dayNum;
-  document.getElementById('my-day-indicator').textContent = `${currentDay} / 30`;
+  const ind = document.getElementById('my-day-indicator');
+  if (ind) ind.textContent = `${currentDay} / 30`;
   saveUserData();
   checkWeeklyBotTrigger();
   alert(`Jumped back to Day ${dayNum}!`);
@@ -893,6 +966,7 @@ function jumpToHistoryDay(dayNum) {
 
 function renderEndingBookTab() {
   const container = document.getElementById('ending-records-list');
+  if (!container) return;
   if (endingBookRecords.length === 0) {
     container.innerHTML = `<div class="p-4 bg-white rounded-2xl border border-purple-100 shadow-sm text-center py-8"><p class="text-xs text-purple-400">No saved ending records yet.</p><p class="text-[10px] text-purple-300 mt-1">Complete 30 days to save your story!</p></div>`;
     return;
@@ -937,8 +1011,10 @@ function restartGameNewLoop() {
 
 function renderPeopleTab() {
   const list = document.getElementById('people-friends-list');
+  if (!list) return;
   list.innerHTML = '';
-  document.getElementById('people-day-status').textContent = currentDay === 1 ? 'Day 1: Anonymous Code Names' : 'Day 2+: Profile Unlocked';
+  const status = document.getElementById('people-day-status');
+  if (status) status.textContent = currentDay === 1 ? 'Day 1: Anonymous Code Names' : 'Day 2+: Profile Unlocked';
 
   Object.entries(contactsData).forEach(([key, person]) => {
     const displayName = (currentDay === 1 && !person.isSpecial) ? person.codeName : person.realName;
@@ -972,41 +1048,51 @@ function openContactProfileModal(key) {
   const avatarBox = document.getElementById('modal-profile-avatar');
   const displayName = (currentDay === 1 && !person.isSpecial) ? person.codeName : person.realName;
 
-  document.getElementById('modal-profile-name').textContent = displayName;
-  document.getElementById('modal-profile-sub').textContent = `${person.codeName} · ${person.occupation || 'Participant'}`;
+  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setTxt('modal-profile-name', displayName);
+  setTxt('modal-profile-sub', `${person.codeName} · ${person.occupation || 'Participant'}`);
 
-  if (currentDay >= 2 && person.avatarUrl) {
-    avatarBox.style.backgroundImage = `url('${person.avatarUrl}')`;
-    avatarBox.textContent = '';
-  } else {
-    avatarBox.style.backgroundImage = 'none';
-    avatarBox.className = `w-32 h-32 rounded-full border-2 border-white/80 shadow-2xl overflow-hidden ${person.bgTone} flex items-center justify-center text-4xl font-bold`;
-    avatarBox.textContent = displayName[0];
+  if (avatarBox) {
+    if (currentDay >= 2 && person.avatarUrl) {
+      avatarBox.style.backgroundImage = `url('${person.avatarUrl}')`;
+      avatarBox.textContent = '';
+    } else {
+      avatarBox.style.backgroundImage = 'none';
+      avatarBox.className = `w-32 h-32 rounded-full border-2 border-white/80 shadow-2xl overflow-hidden ${person.bgTone} flex items-center justify-center text-4xl font-bold`;
+      avatarBox.textContent = displayName[0];
+    }
   }
 
-  document.getElementById('modal-profile-details').innerHTML = `
-    <div><strong class="text-purple-300">Occupation:</strong> ${person.occupation || 'N/A'}</div>
-    ${person.interests ? `<div><strong class="text-purple-300">Interests:</strong> ${person.interests}</div>` : ''}
-    ${person.idealType ? `<div><strong class="text-purple-300">Ideal Type:</strong> ${person.idealType}</div>` : ''}
-  `;
-  modal.classList.remove('hidden');
+  const details = document.getElementById('modal-profile-details');
+  if (details) {
+    details.innerHTML = `
+      <div><strong class="text-purple-300">Occupation:</strong> ${person.occupation || 'N/A'}</div>
+      ${person.interests ? `<div><strong class="text-purple-300">Interests:</strong> ${person.interests}</div>` : ''}
+      ${person.idealType ? `<div><strong class="text-purple-300">Ideal Type:</strong> ${person.idealType}</div>` : ''}
+    `;
+  }
+  if (modal) modal.classList.remove('hidden');
 }
 
 function closeContactProfileModal() {
-  document.getElementById('modal-contact-view').classList.add('hidden');
+  const modal = document.getElementById('modal-contact-view');
+  if (modal) modal.classList.add('hidden');
 }
 
 function openEditMyProfileModal() {
-  document.getElementById('edit-name').value = playerProfile.name;
-  document.getElementById('edit-occ').value = playerProfile.occupation;
-  document.getElementById('edit-interests').value = playerProfile.interests;
-  document.getElementById('edit-type').value = playerProfile.idealType;
-  document.getElementById('edit-style').value = playerProfile.datingStyle;
-  document.getElementById('modal-edit-profile').classList.remove('hidden');
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  setVal('edit-name', playerProfile.name);
+  setVal('edit-occ', playerProfile.occupation);
+  setVal('edit-interests', playerProfile.interests);
+  setVal('edit-type', playerProfile.idealType);
+  setVal('edit-style', playerProfile.datingStyle);
+  const modal = document.getElementById('modal-edit-profile');
+  if (modal) modal.classList.remove('hidden');
 }
 
 function closeEditMyProfileModal() {
-  document.getElementById('modal-edit-profile').classList.add('hidden');
+  const modal = document.getElementById('modal-edit-profile');
+  if (modal) modal.classList.add('hidden');
 }
 
 let tempAvatarDataUrl = '';
@@ -1020,11 +1106,12 @@ function handleAvatarFileSelect(event) {
 
 function saveMyProfileChanges() {
   if (tempAvatarDataUrl) playerProfile.avatarDataUrl = tempAvatarDataUrl;
-  playerProfile.name = document.getElementById('edit-name').value.trim() || 'Lin XinYue';
-  playerProfile.occupation = document.getElementById('edit-occ').value.trim();
-  playerProfile.interests = document.getElementById('edit-interests').value.trim();
-  playerProfile.idealType = document.getElementById('edit-type').value.trim();
-  playerProfile.datingStyle = document.getElementById('edit-style').value.trim();
+  const getVal = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  playerProfile.name = getVal('edit-name') || 'Lin XinYue';
+  playerProfile.occupation = getVal('edit-occ');
+  playerProfile.interests = getVal('edit-interests');
+  playerProfile.idealType = getVal('edit-type');
+  playerProfile.datingStyle = getVal('edit-style');
 
   updateUIFromState();
   saveUserData();
@@ -1032,16 +1119,19 @@ function saveMyProfileChanges() {
 }
 
 function toggleChatSettingsModal() {
-  document.getElementById('modal-chat-settings').classList.toggle('hidden');
+  const modal = document.getElementById('modal-chat-settings');
+  if (modal) modal.classList.toggle('hidden');
 }
 
 function changeSpeedModeFromSettings(val) {
   speedMode = parseInt(val);
-  document.getElementById('next-tap-bar').classList.toggle('hidden', speedMode !== 3);
+  const bar = document.getElementById('next-tap-bar');
+  if (bar) bar.classList.toggle('hidden', speedMode !== 3);
 }
 
 function applyChatTheme(theme) {
   const bg = document.getElementById('chat-viewport-bg');
+  if (!bg) return;
   if (theme === 'purple') bg.className = 'flex-1 overflow-hidden relative flex flex-col bg-[#faf5ff] pb-14';
   if (theme === 'pink') bg.className = 'flex-1 overflow-hidden relative flex flex-col bg-[#fff5f7] pb-14';
   if (theme === 'blue') bg.className = 'flex-1 overflow-hidden relative flex flex-col bg-[#f0f9ff] pb-14';
@@ -1049,6 +1139,8 @@ function applyChatTheme(theme) {
 }
 
 function openSwitchAccountModal() {
-  document.getElementById('login-email-input').value = '';
-  document.getElementById('modal-email-login').classList.remove('hidden');
+  const input = document.getElementById('login-email-input');
+  if (input) input.value = '';
+  const modal = document.getElementById('modal-email-login');
+  if (modal) modal.classList.remove('hidden');
 }
