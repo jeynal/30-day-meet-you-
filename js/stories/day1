@@ -9,42 +9,42 @@ window.day1Data = {
   ],
   dialogues: [
     { type: 'sys', text: 'TDL All Group Chat Unlocked' },
-    { type: 'msg', sender: 'Mr. Horizon', tone: 'bg-purple-200 text-purple-800', text: 'สวัสดีทุกคนครับ ยินดีที่ได้รู้จักครับ' },
-    { type: 'msg', sender: 'Golden Puppy', tone: 'bg-sky-200 text-sky-800', text: 'ว้าววว มารายงานตัวกันแล้ว! ทักทายทุกคนครับ ✨' },
+    { type: 'msg', sender: 'Mr. Horizon', tone: 'bg-purple-200 text-purple-800', text: 'Hello everyone. Nice to meet you all.' },
+    { type: 'msg', sender: 'Golden Puppy', tone: 'bg-sky-200 text-sky-800', text: 'Woah, everyone is checking in! Welcome, nice to meet you guys! ✨' },
     
-    // --- จุดแสดง 4 ตัวเลือก + แอบบวกคะแนนซ่อนไว้หลังบ้าน (ไม่มีแจ้งเตือนขึ้นหน้าจอ) ---
+    // --- CHOICES SYSTEM WITH HIDDEN AFFINITY POINTS ---
     { 
       type: 'choices', 
-      prompt: 'คุณจะพิมพ์ตอบทักทายทุกคนในกลุ่มว่าอะไรดี?',
+      prompt: 'How would you like to greet everyone in the group chat?',
       options: [
         { 
-          text: '1. ยินดีที่ได้รู้จักทุกคนนะคะ ฝากตัวด้วยค่ะ! 😊', 
-          hearts: { chenxu: 1, xiyao: 1, wenjun: 1, guyan: 1 }, // บวกซ่อน +1 ทุกคน
+          text: '1. Nice to meet everyone! Happy to be here 😊', 
+          hearts: { chenxu: 1, xiyao: 1, wenjun: 1, guyan: 1 },
           replySender: 'Golden Puppy', 
-          replyText: 'ยินดีที่ได้รู้จักเช่นกันครับ!! ดูเฟรนลี่จังเลย ✨' 
+          replyText: 'Nice to meet you too!! You seem so friendly ✨' 
         },
         { 
-          text: '2. สวัสดีค่ะทุกคน คืนนี้เมืองเซี่ยงไฮ้สวยมากเลยนะ', 
-          hearts: { wenjun: 2 }, // บวกซ่อนเวินจวิ้น +2
+          text: '2. Hello everyone! Shanghai’s night view is so beautiful tonight.', 
+          hearts: { wenjun: 2 },
           replySender: 'Velvet Noir', 
-          replyText: 'จริงครับ วิวคืนนี้เหมาะกับการนั่งจิบไวน์ฟังแจ๊สที่สุดเลย' 
+          replyText: 'Indeed. A night like this is best enjoyed with jazz and a glass of wine.' 
         },
         { 
-          text: '3. แอบตื่นเต้นนิดหน่อยนะเนี่ย แต่ก็ยินดีที่ได้เจอทุกคนค่ะ', 
-          hearts: { chenxu: 2 }, // บวกซ่อนเฉินซวี่ +2
+          text: '3. A bit nervous to be honest, but really glad to meet you all.', 
+          hearts: { chenxu: 2 },
           replySender: 'Mr. Horizon', 
-          replyText: 'ไม่ต้องตื่นเต้นไปครับ ทำตัวตามสบายได้เลย' 
+          replyText: 'No need to be nervous. Just feel at home.' 
         },
         { 
-          text: '4. ...สวัสดีค่ะ (แอบเข้ามาอ่านเงียบๆ)', 
-          hearts: { guyan: 2 }, // บวกซ่อนกู้เยี่ยน +2
+          text: '4. ...Hello everyone (quietly lurking).', 
+          hearts: { guyan: 2 },
           replySender: 'Black Cat', 
-          replyText: 'หึ สายซุ่มสินะ... ยินดีที่ได้เจอเหมือนกัน' 
+          replyText: 'Heh, a lurker huh... Glad to meet you anyway.' 
         }
       ] 
     },
 
-    { type: 'msg', sender: 'Mochi', tone: 'bg-purple-200 text-purple-800', text: 'ว่าแต่ดึกขนาดนี้ มีใครหิวข้าวเหมือนกันบ้างไหมเนี่ย 😋' },
+    { type: 'msg', sender: 'Mochi', tone: 'bg-purple-200 text-purple-800', text: 'By the way, is anyone else getting hungry at this hour? 😋' },
     { type: 'master_event', eventName: 'TRIGGER_HEART_SIGNAL' }
   ]
 };
