@@ -21,7 +21,6 @@
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    /* Notification Popup Animation */
     .noti-slide-down { animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .noti-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes slideDown {
@@ -36,7 +35,7 @@
 </head>
 <body class="flex justify-center select-none">
 
-  <!-- IN-APP NOTIFICATION POPUP (การแจ้งเตือนป๊อปอัปเด้งจากด้านบน) -->
+  <!-- IN-APP NOTIFICATION POPUP -->
   <div id="in-app-notification" class="hidden fixed top-3 left-0 right-0 z-50 px-4 max-w-md mx-auto pointer-events-none">
     <div onclick="clickNotificationBanner()" class="bg-white/95 backdrop-blur-md border border-purple-200/80 rounded-2xl p-3 shadow-2xl flex items-center space-x-3 pointer-events-auto cursor-pointer active:scale-95 transition">
       <div id="noti-avatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-fuchsia-400 to-pink-400 flex items-center justify-center font-bold text-white text-xs shadow-sm shrink-0 overflow-hidden bg-cover bg-center">
@@ -93,11 +92,11 @@
     <!-- MAIN VIEWPORT -->
     <main id="chat-viewport-bg" class="flex-1 overflow-hidden relative flex flex-col bg-[#faf5ff] pb-14 transition-colors">
 
-      <!-- TAB 1: CHATS (DYNAMIC CHAT LIST - สลับลำดับใหม่อยู่บนสุด) -->
+      <!-- TAB 1: CHATS -->
       <section id="tab-chats" class="tab-page flex-1 overflow-y-auto flex flex-col pt-2">
         <div class="divide-y divide-purple-100/60 flex flex-col" id="chat-channel-list">
           
-          <!-- Master Chat (Order 1) -->
+          <!-- Master Chat -->
           <div id="channel-master" onclick="openMasterChat()" class="p-4 flex items-center space-x-3.5 hover:bg-purple-50/50 cursor-pointer transition bg-pink-50/30 order-1">
             <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-fuchsia-400 to-pink-400 flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0">M</div>
             <div class="flex-1 min-w-0">
@@ -112,7 +111,7 @@
             </div>
           </div>
 
-          <!-- Group Chat (Order 2) -->
+          <!-- Group Chat -->
           <div id="channel-group" onclick="openGroupChat()" class="hidden p-4 flex items-center space-x-3.5 hover:bg-purple-50/50 cursor-pointer transition order-2">
             <div class="w-12 h-12 rounded-full overflow-hidden grid grid-cols-2 grid-rows-2 bg-purple-100 border border-purple-200/60 shrink-0">
               <div class="bg-purple-200 flex items-center justify-center text-[8px] font-bold text-purple-700">CX</div>
@@ -132,8 +131,23 @@
             </div>
           </div>
 
-          <!-- Heart Sending Room (Order 3) -->
-          <div id="channel-heart" onclick="openHeartSendingRoom()" class="hidden p-4 flex items-center space-x-3.5 hover:bg-purple-50/50 cursor-pointer transition order-3">
+          <!-- Consultant Bot Chat (ทุก 7 วัน) -->
+          <div id="channel-bot" onclick="openConsultantBotChat()" class="hidden p-4 flex items-center space-x-3.5 hover:bg-purple-50/50 cursor-pointer transition order-3 bg-emerald-50/40">
+            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0">🤖</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-baseline">
+                <h4 class="text-xs font-bold text-purple-950 truncate flex items-center gap-1.5">
+                  LUMEN Counselor
+                  <span id="bot-unread-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                </h4>
+                <span class="text-[10px] text-emerald-600 font-semibold">Day 7 Insight</span>
+              </div>
+              <p id="bot-last-msg" class="text-xs text-purple-400 truncate mt-0.5">คุณรู้ไหมว่าใครกำลังแอบชอบคุณอยู่? แตะเพื่อสุ่มเช็ก...</p>
+            </div>
+          </div>
+
+          <!-- Heart Sending Room -->
+          <div id="channel-heart" onclick="openHeartSendingRoom()" class="hidden p-4 flex items-center space-x-3.5 hover:bg-purple-50/50 cursor-pointer transition order-4">
             <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-sky-300 to-pink-300 flex items-center justify-center font-bold text-white text-sm shadow-sm shrink-0">💌</div>
             <div class="flex-1 min-w-0">
               <div class="flex justify-between items-baseline">
@@ -234,7 +248,7 @@
         </div>
       </section>
 
-      <!-- TAB 5: MORE (SETTINGS & API) -->
+      <!-- TAB 5: MORE -->
       <section id="tab-more" class="tab-page hidden flex-1 overflow-y-auto p-5 space-y-5">
         <h2 class="text-base font-bold text-purple-950">Settings & Account</h2>
 
@@ -248,27 +262,6 @@
             🔄 Switch Account / Log in with New Email
           </button>
         </div>
-
-        <div class="p-4 bg-white rounded-2xl space-y-3 border border-purple-100 shadow-sm text-xs">
-          <div class="flex justify-between items-center">
-            <label class="font-bold text-purple-900 block">Gemini API Key (AI Integration):</label>
-            <div id="api-status-badge" class="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-[10px] text-slate-500 font-bold">
-              <span id="api-status-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-              <span id="api-status-text">Disconnected</span>
-            </div>
-          </div>
-
-          <input type="password" id="gemini-api-key" placeholder="AIzaSy..." class="w-full p-2.5 bg-purple-50/60 border border-purple-200 rounded-xl text-xs focus:outline-none focus:border-fuchsia-400">
-
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button onclick="testGeminiConnection()" class="bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold py-2 rounded-xl transition">
-              🧪 Test Connection
-            </button>
-            <button onclick="saveGeminiApiKey()" class="bg-gradient-to-r from-fuchsia-400 to-pink-400 hover:from-fuchsia-500 hover:to-pink-500 text-white font-bold py-2 rounded-xl transition shadow-sm">
-              💾 Save API Key
-            </button>
-          </div>
-        </div>
       </section>
 
       <!-- ROOM 1: MASTER -->
@@ -280,20 +273,55 @@
       <!-- ROOM 2: GROUP -->
       <section id="room-group" class="hidden flex-1 flex flex-col h-full bg-[#fcf9ff] overflow-hidden">
         <div id="group-stream" class="flex-1 overflow-y-auto p-4 space-y-3.5"></div>
+        
         <div id="typing-indicator" class="hidden px-4 py-1.5 text-xs text-purple-400 italic flex items-center gap-1.5 bg-purple-50/50 border-t border-purple-100">
           <span class="w-1.5 h-1.5 bg-fuchsia-400 rounded-full animate-bounce"></span>
           <span class="w-1.5 h-1.5 bg-fuchsia-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
           <span class="w-1.5 h-1.5 bg-fuchsia-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
           <span id="typing-name" class="ml-1 text-[11px]">typing...</span>
         </div>
+
         <div id="next-tap-bar" class="hidden p-2 bg-purple-50/40 border-t border-purple-100 text-center">
           <button onclick="advanceDialogue()" class="w-full py-2 bg-white hover:bg-purple-50 text-purple-800 text-xs font-semibold rounded-xl border border-purple-200/80 shadow-sm flex items-center justify-center gap-1">
             <span id="label-tap-next">Tap to read next message</span> ▼
           </button>
         </div>
-        <div id="group-player-input-bar" class="hidden p-2.5 bg-white border-t border-purple-100 flex items-center gap-2">
-          <input type="text" id="player-free-text" placeholder="Type response..." class="flex-1 bg-purple-50/50 border border-purple-200 rounded-xl px-3.5 py-2 text-xs text-purple-950 focus:outline-none focus:border-fuchsia-400">
-          <button onclick="sendPlayerFreeMessage()" id="btn-send-msg" class="bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm">Send</button>
+
+        <div id="group-choices-panel" class="hidden p-3 bg-white border-t border-purple-100 space-y-2">
+          <p id="choices-prompt-text" class="text-[11px] font-bold text-purple-900 mb-1">เลือกคำตอบของคุณ:</p>
+          <div id="choices-container" class="grid grid-cols-1 gap-1.5"></div>
+        </div>
+      </section>
+
+      <!-- ROOM 4: CONSULTANT BOT (สุ่มเปิดดูคะแนนความชอบลับ) -->
+      <section id="room-bot" class="hidden flex-1 flex flex-col h-full bg-[#f7fbf9] p-4 overflow-y-auto space-y-4">
+        <div class="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm space-y-2">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">🤖</div>
+            <div>
+              <h3 class="font-bold text-xs text-purple-950">LUMEN Counselor (7-Day Insight)</h3>
+              <p class="text-[10px] text-emerald-600 font-semibold">Weekly Affinity Analysis</p>
+            </div>
+          </div>
+          <p class="text-xs text-purple-700 leading-relaxed pt-1">
+            "สวัสดีครับ! ผ่านมาถึงวันที่ <span id="bot-day-num" class="font-bold text-emerald-600">7</span> แล้วนะ คุณอยากรู้ไหมว่าตอนนี้ผู้ชายคนไหนในคลับกำลังคิดยังไงกับคุณอยู่? สุ่มเลือกผู้ชาย 1 คนเพื่อวิเคราะห์หัวใจลับได้เลย!"
+          </p>
+        </div>
+
+        <div id="bot-guy-select-panel" class="space-y-2">
+          <p class="text-xs font-bold text-purple-900 ml-1">เลือกผู้ชายที่คุณอยากเปิดดูคะแนนหัวใจ:</p>
+          <div id="bot-guy-buttons" class="grid grid-cols-1 gap-2"></div>
+        </div>
+
+        <div id="bot-insight-result" class="hidden bg-white p-4 rounded-2xl border border-pink-200 shadow-md space-y-3">
+          <div class="flex justify-between items-center pb-2 border-b border-purple-100">
+            <span id="bot-result-name" class="font-bold text-xs text-purple-950">Chen Xu (เฉินซวี่)</span>
+            <span id="bot-result-score" class="text-xs font-bold text-pink-500 bg-pink-50 px-2.5 py-1 rounded-full border border-pink-200">❤️ 5 / 10</span>
+          </div>
+          <p id="bot-result-desc" class="text-xs text-purple-800 italic leading-relaxed bg-purple-50/50 p-3 rounded-xl border border-purple-100">
+            "เฉินซวี่รู้สึกประทับใจความสงบและความเข้าอกเข้าใจของคุณมากๆ เขามองคุณเป็นคนที่คุยด้วยแล้วสบายใจที่สุดในกลุ่ม..."
+          </p>
+          <button onclick="exitActiveChat()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs shadow-sm transition">ขอบคุณบอท / กลับหน้าแชตหลัก</button>
         </div>
       </section>
 
@@ -322,7 +350,7 @@
     <!-- BOTTOM NAV BAR -->
     <nav id="bottom-bar" class="absolute bottom-0 left-0 right-0 h-14 bg-white/95 backdrop-blur-md border-t border-purple-100 px-4 flex justify-around items-center z-50 shrink-0">
       <button onclick="switchTab('chats')" id="nav-chats" class="nav-btn text-fuchsia-500 flex flex-col items-center"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></button>
-      <button onclick="switchTab('people')" id="nav-people" class="nav-btn text-purple-300 hover:text-purple-600 flex flex-col items-center"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></button>
+      <button onclick="switchTab('people')" id="nav-people" class="nav-btn text-purple-300 hover:text-purple-600 flex flex-col items-center"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></button>
       <button onclick="switchTab('story')" id="nav-story" class="nav-btn text-purple-300 hover:text-purple-600 flex flex-col items-center"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M3 3v8h8V3H3zm0 18h8v-8H3v8zm10-18v8h8V3h-8zm0 18h8v-8h-8v8z"/></svg></button>
       <button onclick="switchTab('my')" id="nav-my" class="nav-btn text-purple-300 hover:text-purple-600 flex flex-col items-center"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></button>
       <button onclick="switchTab('more')" id="nav-more" class="nav-btn text-purple-300 hover:text-purple-600 flex flex-col items-center"><svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></button>
@@ -354,14 +382,6 @@
           <button onclick="applyChatTheme('blue')" class="h-8 rounded-xl bg-sky-100 border border-sky-300 flex items-center justify-center text-xs">🩵</button>
           <button onclick="applyChatTheme('dark')" class="h-8 rounded-xl bg-slate-800 text-white border border-slate-700 flex items-center justify-center text-xs">🖤</button>
         </div>
-      </div>
-      <div class="space-y-1">
-        <label class="text-xs font-semibold text-purple-900 block">Language:</label>
-        <select id="setting-lang-select" onchange="changeLanguage(this.value)" class="w-full bg-purple-50/60 border border-purple-200 rounded-xl p-2 text-xs text-purple-950 focus:outline-none">
-          <option value="en">🇬🇧 English</option>
-          <option value="th">🇹🇭 ภาษาไทย</option>
-          <option value="zh">🇨🇳 中文</option>
-        </select>
       </div>
       <button onclick="toggleChatSettingsModal()" class="w-full bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white font-bold py-2 rounded-xl text-xs shadow-sm">Save & Close</button>
     </div>
