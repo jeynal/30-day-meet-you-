@@ -262,9 +262,10 @@ function processMasterQueue() {
     const box = document.getElementById('master-form-box');
     if (box) {
       box.innerHTML = `
-        <div class="space-y-1 text-center p-2 bg-purple-50 rounded-xl border border-purple-100">
-          <label class="text-xs font-semibold text-purple-900 block">Select Profile Avatar Image:</label>
+        <div class="space-y-2 text-center p-3 bg-purple-50 rounded-2xl border border-purple-100 shadow-xs">
+          <label class="text-xs font-semibold text-purple-900 block">Upload Profile Avatar (Optional):</label>
           <input type="file" accept="image/*" onchange="handleMasterAvatarUpload(event)" class="text-xs text-purple-900 file:mr-2 file:py-1 file:px-3 file:rounded-xl file:border-0 file:bg-pink-100 file:text-fuchsia-600">
+          <button onclick="skipMasterAvatarUpload()" class="block mx-auto text-[11px] text-purple-400 underline pt-1">Skip this step →</button>
         </div>
       `;
     }
@@ -277,8 +278,6 @@ function processMasterQueue() {
     if (item.eventName === 'OPEN_GROUP_CHANNEL') {
       const msg = document.getElementById('master-last-msg');
       if (msg) msg.textContent = 'TDL All Group Unlocked!';
-      const dot = document.getElementById('master-unread-dot');
-      if (dot) dot.classList.add('hidden');
       const grp = document.getElementById('channel-group');
       if (grp) grp.classList.remove('hidden');
       moveChannelToTop('group');
@@ -286,10 +285,16 @@ function processMasterQueue() {
       triggerInAppNotification('TDL : All Group', 'Lounge Activated! Tap to join.', 'G', 'group');
 
       const box = document.getElementById('master-form-box');
-      if (box) box.innerHTML = `<button onclick="exitActiveChat(); openGroupChat();" class="w-full bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white font-bold py-2.5 rounded-xl text-xs">Enter TDL All Group Lounge →</button>`;
+      if (box) box.innerHTML = `<button onclick="exitActiveChat(); openGroupChat();" class="w-full bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white font-bold py-2.5 rounded-xl text-xs shadow-md uppercase tracking-wider">Enter TDL All Group Lounge →</button>`;
       saveUserData();
     }
   }
+}
+
+function skipMasterAvatarUpload() {
+  const box = document.getElementById('master-form-box');
+  if (box) box.innerHTML = '';
+  processMasterQueue();
 }
 
 function handleMasterAvatarUpload(event) {
